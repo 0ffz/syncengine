@@ -1,0 +1,28 @@
+[versions]
+compose = "1.8.0"
+kotlin = "2.1.20"
+agp = "8.7.3"
+ktor = "3.1.2"
+
+[libraries]
+appcompat = { module = "androidx.appcompat:appcompat", version = "1.7.0" }
+exposed-core = "org.jetbrains.exposed:exposed-core:1.0.0-beta-1"
+exposed-dao = "org.jetbrains.exposed:exposed-dao:1.0.0-beta-1"
+exposed-json = "org.jetbrains.exposed:exposed-json:1.0.0-beta-1"
+exposed-jdbc = "org.jetbrains.exposed:exposed-jdbc:1.0.0-beta-1"
+exposed-r2dbc = "org.jetbrains.exposed:exposed-r2dbc:1.0.0-beta-1"
+kotlinx-rpc-client = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-client:0.6.2"
+kotlinx-rpc-server = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-server:0.6.2"
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
+
+[plugins]
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

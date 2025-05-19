@@ -1,0 +1,7 @@
+.idea
+.kotlin
+keystore.properties
+local.properties
+release
+build
+.gradle

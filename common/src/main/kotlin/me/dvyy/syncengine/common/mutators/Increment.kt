@@ -1,0 +1,23 @@
+package me.dvyy.syncengine.common.mutators
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import me.dvyy.syncengine.common.KeyValueStore
+
+@Serializable
+@SerialName("inc")
+data class Increment(
+    val row: Long,
+    val value: Int,
+) : Mutator {
+    override val id = 0
+    override fun mutate(store: KeyValueStore) {
+        store[row] = ((store[row]?.toIntOrNull() ?: 0) + value).toString()
+    }
+
+    override fun reduce(previous: Mutator): Mutator? {
+//        val p = previous as Increment
+//        if (p.row == row) return Increment(row, value + p.value)
+        return null
+    }
+}

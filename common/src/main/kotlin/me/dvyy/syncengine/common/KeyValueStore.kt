@@ -1,4 +1,3 @@
 package me.dvyy.syncengine.common
 
-class KeyValueStore {
-}
+typealias KeyValueStore = MutableMap<Long, String>

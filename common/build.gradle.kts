@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     kotlin("plugin.serialization") version "2.1.20"
-    id("org.jetbrains.kotlinx.rpc.plugin") version "0.6.2"
+//    id("org.jetbrains.kotlinx.rpc.plugin") version "0.6.2"
 }
 tasks {
     test {
@@ -9,14 +9,16 @@ tasks {
     }
 }
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-serialization-json:0.6.2")
+//    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-serialization-json:0.6.2")
+//    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-serialization-cbor:0.6.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.8.1")
 
     // Client API
-    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-client:0.6.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-client:0.6.2")
+//    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-client:0.6.2")
+//    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-client:0.6.2")
     // Server API
-    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-server:0.6.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-server:0.6.2")
+//    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-server:0.6.2")
+//    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-server:0.6.2")
 //    implementation(libs.kotlinx.rpc.server)
 //    implementation(libs.kotlinx.rpc.client)
     implementation(libs.ktor.server.core)

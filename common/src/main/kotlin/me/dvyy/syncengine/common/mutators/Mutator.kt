@@ -5,9 +5,7 @@ import me.dvyy.syncengine.common.KeyValueStore
 
 @Serializable
 sealed interface Mutator {
-    val id: Int
-
-    fun mutate(store: KeyValueStore)
+    suspend fun mutate(store: KeyValueStore)
 
     fun reduce(previous: Mutator): Mutator? = null
 }

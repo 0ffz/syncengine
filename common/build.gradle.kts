@@ -21,13 +21,14 @@ dependencies {
 //    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-server:0.6.2")
 //    implementation(libs.kotlinx.rpc.server)
 //    implementation(libs.kotlinx.rpc.client)
-    implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.netty)
+//    implementation(libs.ktor.server.core)
+//    implementation(libs.ktor.server.netty)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
-    implementation("io.ktor:ktor-server-core:3.1.2")
-    implementation("io.ktor:ktor-server-websockets:3.1.2")
-    implementation("io.ktor:ktor-server-core:3.1.2")
+//    implementation("io.ktor:ktor-server-core:3.1.2")
+    implementation("io.ktor:ktor-client-websockets:3.1.2")
+    implementation("io.ktor:ktor-serialization-kotlinx-protobuf:3.1.2")
+//    implementation("io.ktor:ktor-server-core:3.1.2")
 
     implementation(libs.exposed.dao)
     implementation(libs.exposed.core)
@@ -39,6 +40,7 @@ dependencies {
 //    implementation(libs.exposed.jdbc)
 //    implementation(libs.exposed.json)
     implementation("org.xerial:sqlite-jdbc:3.49.1.0")
+    implementation(libs.logback)
 
     // tests
     testImplementation(kotlin("test"))

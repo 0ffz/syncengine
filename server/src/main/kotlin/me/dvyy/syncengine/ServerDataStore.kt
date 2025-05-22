@@ -1,4 +1,4 @@
-package me.dvyy.syncengine.common
+package me.dvyy.syncengine
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +14,7 @@ import org.jetbrains.exposed.v1.r2dbc.*
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 
 class ServerDataStore(
-    val store: KeyValueStore = SqlBackedKeyValueStore(),
+    val store: me.dvyy.syncengine.common.KeyValueStore = SqlBackedKeyValueStore(),
 ) {
     val db = R2dbcDatabase.connect("r2dbc:h2:mem:///regular;DB_CLOSE_DELAY=-1;")
 
@@ -35,7 +35,12 @@ class ServerDataStore(
     suspend fun getUpdatedSince(timestamp: Long): Updates {
         val updates = KeyValueTable.select(KeyValueTable.id, KeyValueTable.value)
             .where { KeyValueTable.editTime greater timestamp }
-            .map { RowDiff(it[KeyValueTable.id].value, it[KeyValueTable.value]) }
+            .map {
+                _root_ide_package_.me.dvyy.syncengine.common.RowDiff(
+                    it[KeyValueTable.id].value,
+                    it[KeyValueTable.value]
+                )
+            }
             .toList()
         val lastUpdate =
             KeyValueTable.select(KeyValueTable.editTime).lastOrNull()?.get(KeyValueTable.editTime) ?: timestamp
@@ -46,7 +51,7 @@ class ServerDataStore(
     }
 }
 
-class SqlBackedKeyValueStore : KeyValueStore {
+class SqlBackedKeyValueStore : me.dvyy.syncengine.common.KeyValueStore {
     override suspend fun set(key: Long, value: String?) {
         if (value == null) remove(key)
         else KeyValueTable.upsert(KeyValueTable.id) { it[id] = key; it[this.value] = value; it[editTime] = System.currentTimeMillis() }
@@ -63,7 +68,7 @@ class SqlBackedKeyValueStore : KeyValueStore {
 }
 
 data class Updates(
-    val updates: List<RowDiff>,
+    val updates: List<me.dvyy.syncengine.common.RowDiff>,
     val lastTimestamp: Long,
 )
 

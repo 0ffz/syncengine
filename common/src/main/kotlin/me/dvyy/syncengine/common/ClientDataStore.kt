@@ -1,5 +1,11 @@
 package me.dvyy.syncengine.common
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.protobuf.ProtoBuf
 import me.dvyy.syncengine.common.mutators.Increment
@@ -11,14 +17,17 @@ typealias EncodedMutator = ByteArray
 @OptIn(ExperimentalSerializationApi::class)
 class ClientDataStore(
     val store: ReversibleDataStore,
+    val scope: CoroutineScope,
 ) {
     val encodedMutators = ConcurrentLinkedQueue<EncodedMutator>()
     val mutatorsCalled = ConcurrentLinkedQueue<Mutator>()
     var lastSyncTimestamp = 0L
 
-    suspend fun test() {
+    fun incrementCounter() = scope.launch {
         Increment(1, 1).invoke()
     }
+
+    fun observe(key: Long): Flow<String?> = store.changes.receiveAsFlow().filter { it.first == key }.map { it.second }
 
     suspend inline operator fun <reified T : Mutator> T.invoke() {
 //        val reduced = (mutatorsCalled.lastOrNull() as? T)?.let {

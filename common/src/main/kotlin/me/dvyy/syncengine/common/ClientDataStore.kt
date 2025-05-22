@@ -19,7 +19,7 @@ class ClientDataStore(
     val store: ReversibleDataStore,
     val scope: CoroutineScope,
 ) {
-    val encodedMutators = ConcurrentLinkedQueue<EncodedMutator>()
+    //    val encodedMutators = ConcurrentLinkedQueue<EncodedMutator>()
     val mutatorsCalled = ConcurrentLinkedQueue<Mutator>()
     var lastSyncTimestamp = 0L
 
@@ -38,21 +38,34 @@ class ClientDataStore(
 //            encodedMutators[encodedMutators.lastIndex] = ProtoBuf.encodeToByteArray(Mutator.serializer(), reduced)
 //            mutatorsCalled.[encodedMutators.lastIndex] = reduced
 //        } else {
-            encodedMutators += ProtoBuf.encodeToByteArray(Mutator.serializer(), this)
-            mutatorsCalled += this
+//            encodedMutators += ProtoBuf.encodeToByteArray(Mutator.serializer(), this)
+        mutatorsCalled += this
 //        }
         mutate(store)
     }
 
-    suspend fun reconcileDiff(result: SyncResult) {
+    //    suspend fun reconcileDiff(result: SyncResult) {
+//
+//    }
+    suspend fun reconcileDiff(count: Int, getUpdates: () -> SyncResult.Updates) {
         store.revert()
-        result.diffs.forEach { (row, value) ->
+        var last: SyncResult.Updates? = null
+        repeat(count) {
+            last = getUpdates()
+            last.updates.forEach { (row, value) ->
+                store.setUnderlying(row, value)
+            }
+        }
+        last?.let { lastSyncTimestamp = it.lastTimestamp }
+        mutatorsCalled.forEach { it.mutate(store) }
+    }
+
+    suspend fun reconcileDiff(updates: SyncResult.Updates) {
+        store.revert()
+        updates.updates.forEach { (row, value) ->
             store.setUnderlying(row, value)
         }
-        lastSyncTimestamp = result.lastModificationTimestamp
-        repeat(result.lastMutatorApplied) {
-            mutatorsCalled.remove()
-        }
+        lastSyncTimestamp = updates.lastTimestamp
         mutatorsCalled.forEach { it.mutate(store) }
     }
 

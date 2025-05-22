@@ -29,15 +29,24 @@ import me.dvyy.syncengine.common.mutators.Mutator
 //    }
 //}
 
-@Serializable
-data class SyncResult(
-    val diffs: List<RowDiff>,
-    val lastModificationTimestamp: Long,
-    val lastMutatorApplied: Int,
-)
+//@Serializable
+//data class SyncResult(
+//    val diffs: List<RowDiff>,
+//    val lastModificationTimestamp: Long,
+//    val mutatorsAcknowledged: Int,
+//)
+
+//@Serializable
+//data class SyncRequest(
+//    val mutators: List<Mutator>,
+//    val lastSyncTimestamp: Long,
+//)
 
 @Serializable
-data class SyncRequest(
-    val mutators: List<Mutator>,
-    val lastSyncTimestamp: Long,
-)
+sealed interface SyncRequest {
+    @Serializable
+    class ChangesSince(val timestamp: Long) : SyncRequest
+
+    @Serializable
+    class ApplyMutators(val mutators: List<Mutator>) : SyncRequest
+}

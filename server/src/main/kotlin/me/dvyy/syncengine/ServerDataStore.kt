@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import me.dvyy.syncengine.common.SyncResult
 import me.dvyy.syncengine.common.mutators.Mutator
 import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
@@ -32,7 +33,7 @@ class ServerDataStore(
         apply(it)
     }
 
-    suspend fun getUpdatedSince(timestamp: Long): Updates {
+    suspend fun getUpdatedSince(timestamp: Long): SyncResult.Updates {
         val updates = KeyValueTable.select(KeyValueTable.id, KeyValueTable.value)
             .where { KeyValueTable.editTime greater timestamp }
             .map {
@@ -44,7 +45,7 @@ class ServerDataStore(
             .toList()
         val lastUpdate =
             KeyValueTable.select(KeyValueTable.editTime).lastOrNull()?.get(KeyValueTable.editTime) ?: timestamp
-        return Updates(
+        return SyncResult.Updates(
             updates,
             lastUpdate
         )
@@ -66,11 +67,6 @@ class SqlBackedKeyValueStore : me.dvyy.syncengine.common.KeyValueStore {
         KeyValueTable.deleteWhere { KeyValueTable.id eq key }
     }
 }
-
-data class Updates(
-    val updates: List<me.dvyy.syncengine.common.RowDiff>,
-    val lastTimestamp: Long,
-)
 
 object KeyValueTable : LongIdTable() {
     val value = text("value")

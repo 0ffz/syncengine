@@ -7,16 +7,17 @@ import io.ktor.server.netty.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.protobuf.ProtoBuf
 import me.dvyy.syncengine.common.SyncRequest
 import me.dvyy.syncengine.common.SyncResult
 import kotlin.time.Duration.Companion.seconds
 
+@OptIn(ExperimentalSerializationApi::class)
 fun main() {
     embeddedServer(Netty, port = 8080) {
         val store = ServerDataStore()
@@ -29,31 +30,34 @@ fun main() {
             masking = false
         }
 
-//        val sharedFlow = MutableSharedFlow<SyncResult>()
-        val channel = MutableStateFlow<SyncResult?>(null)
+        val updateStream = MutableStateFlow<SyncResult.Updates?>(null)
         routing {
             webSocket("/sync") {
-                println("Client connected")
-                launch {
-                    var lastClientSyncTimestamp = 0L
-                    channel.collect {
-                        if (lastClientSyncTimestamp == it?.lastModificationTimestamp) return@collect
+                val job = launch {
+                    updateStream.collect { updates ->
+                        if(updates == null) return@collect
                         println("[Server] forwarding changes to client")
-                        val result = service.sync(SyncRequest(listOf(), lastClientSyncTimestamp))
-                        lastClientSyncTimestamp = result.lastModificationTimestamp
-                        sendSerialized(result)
+                        sendSerialized<SyncResult>(updates)
                     }
                 }
                 try {
-                    while (true) {
-                        val request = receiveDeserialized<SyncRequest>()
+                    incoming.consumeAsFlow().collect { frame ->
+                        val request = ProtoBuf.decodeFromByteArray(SyncRequest.serializer(), frame.data)
                         println("Received request: $request")
-                        val result = service.sync(request)
-                        channel.emit(result)
-                        sendSerialized(result)
+                        when (request) {
+                            is SyncRequest.ChangesSince -> {
+                                sendSerialized<SyncResult>(store.getUpdatedSince(request.timestamp))
+                            }
+
+                            is SyncRequest.ApplyMutators -> {
+                                updateStream.emit(service.sync(request))
+                                sendSerialized<SyncResult>(SyncResult.MutatorsAck(request.mutators.size))
+                            }
+                        }
                     }
                 } finally {
-                    println("Client disconnected")
+                    job.cancel()
+                    println("[Server] disconnected")
                 }
             }
         }

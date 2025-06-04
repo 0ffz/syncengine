@@ -56,7 +56,7 @@ class ClientDataStore(
                 store.setUnderlying(row, value)
             }
         }
-        last?.let { lastSyncTimestamp = it.lastTimestamp }
+        last?.let { lastSyncTimestamp = it.lastChange }
         mutatorsCalled.forEach { it.mutate(store) }
     }
 
@@ -65,7 +65,7 @@ class ClientDataStore(
         updates.updates.forEach { (row, value) ->
             store.setUnderlying(row, value)
         }
-        lastSyncTimestamp = updates.lastTimestamp
+        lastSyncTimestamp = updates.lastChange
         mutatorsCalled.forEach { it.mutate(store) }
     }
 

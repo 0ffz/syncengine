@@ -6,6 +6,7 @@ plugins {
 
 dependencies {
     implementation(project(":common"))
+    implementation(project(":server"))
     implementation(compose.desktop.currentOs)
     implementation(compose.material3)
 }

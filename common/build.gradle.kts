@@ -27,6 +27,7 @@ dependencies {
     implementation(libs.ktor.client.cio)
 //    implementation("io.ktor:ktor-server-core:3.1.2")
     implementation("io.ktor:ktor-client-websockets:3.1.2")
+    implementation("io.ktor:ktor-client-content-negotiation:3.1.2")
     implementation("io.ktor:ktor-serialization-kotlinx-protobuf:3.1.2")
 //    implementation("io.ktor:ktor-server-core:3.1.2")
 

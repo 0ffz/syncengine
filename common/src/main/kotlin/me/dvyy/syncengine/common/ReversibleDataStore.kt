@@ -1,6 +1,7 @@
 package me.dvyy.syncengine.common
 
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class MapBackedKeyValueStore: KeyValueStore {

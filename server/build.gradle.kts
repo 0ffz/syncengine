@@ -35,6 +35,9 @@ dependencies {
 //    implementation(libs.exposed.json)
 //    implementation("org.xerial:sqlite-jdbc:3.49.1.0")
     implementation(libs.logback)
+    implementation("io.ktor:ktor-server-content-negotiation:3.1.2")
+    implementation("io.ktor:ktor-serialization-jackson:3.1.2")
+    implementation("io.ktor:ktor-server-content-negotiation:3.1.2")
 
     // tests
     testImplementation(kotlin("test"))

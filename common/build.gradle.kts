@@ -36,7 +36,6 @@ dependencies {
     implementation(libs.exposed.r2dbc)
     implementation(libs.exposed.datetime)
     implementation(libs.r2dbc.h2)
-    implementation(libs.r2dbc.postgresql)
     implementation("com.h2database:h2:2.2.224")
 //    implementation(libs.exposed.jdbc)
 //    implementation(libs.exposed.json)

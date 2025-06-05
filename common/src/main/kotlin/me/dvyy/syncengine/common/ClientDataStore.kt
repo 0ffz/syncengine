@@ -23,11 +23,17 @@ class ClientDataStore(
     val mutatorsCalled = ConcurrentLinkedQueue<Mutator>()
     var lastSyncTimestamp = 0L
 
+    fun invoke(mutator: Mutator) = scope.launch {
+        mutator.invoke()
+    }
+
     fun incrementCounter() = scope.launch {
         Increment(1, 1).invoke()
     }
 
-    fun observe(key: Long): Flow<String?> = store.changes.receiveAsFlow().filter { it.first == key }.map { it.second }
+    fun observe(key: Long): Flow<String?> = store.changes
+        .filter { it.first == key }
+        .map { it.second }
 
     suspend inline operator fun <reified T : Mutator> T.invoke() {
 //        val reduced = (mutatorsCalled.lastOrNull() as? T)?.let {

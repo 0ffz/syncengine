@@ -1,6 +1,8 @@
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -15,6 +17,7 @@ import kotlinx.coroutines.withContext
 import me.dvyy.syncengine.common.ClientDataStore
 import me.dvyy.syncengine.common.ReversibleDataStore
 import me.dvyy.syncengine.common.SyncClient
+import me.dvyy.syncengine.common.mutators.MutateText
 import me.dvyy.syncengine.startSyncServer
 
 suspend fun main() {
@@ -45,10 +48,16 @@ fun MainApp() {
 //    }
     Scaffold {
         val counter by store.observe(1).collectAsState("0")
+        val text by store.observe(2).collectAsState("")
 //        var text by remember { mutableStateOf("") }
-        Button(onClick = { store.incrementCounter() }) {
-            Text("Increment: $counter")
+        Column {
+            Button(onClick = { store.incrementCounter() }) {
+                Text("Increment: $counter")
+            }
+            TextField(text ?: "", onValueChange = {
+                println("Storing $it")
+                store.invoke(MutateText(row = 2, insertAfter = 0, text = it))
+            })
         }
-//        TextField(text, onValueChange = { text = it })
     }
 }

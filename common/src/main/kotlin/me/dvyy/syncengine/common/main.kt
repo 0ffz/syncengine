@@ -6,10 +6,16 @@ import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.toList
+import kotlinx.serialization.json.Json
+import me.dvyy.syncengine.common.mutators.Increment
+import me.dvyy.syncengine.common.mutators.Mutator
+import me.dvyy.syncengine.common.ui.QueryObserver
+import me.dvyy.syncengine.common.ui.Tasks
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.core.Table.Dual.default
 import org.jetbrains.exposed.v1.core.dao.id.IdTable
 import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
+import org.jetbrains.exposed.v1.json.jsonb
 import org.jetbrains.exposed.v1.r2dbc.*
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import kotlin.time.Duration.Companion.seconds
@@ -18,6 +24,10 @@ import kotlin.time.Duration.Companion.seconds
 private class KeyValueTable(name: String) : LongIdTable(name = name) {
     val value = text("value")
     val editTime = long("timestamp")//datetime("timestamp").defaultExpression(CurrentDateTime)
+}
+
+object MutatorQueue: LongIdTable("test") {
+    val mutator = jsonb("mutator", Json, Mutator.serializer())
 }
 
 //private class KeyValueEntity(
@@ -73,12 +83,19 @@ suspend fun <T : IdTable<*>> R2dbcTransaction.diffableTable(
     return DiffableTables(underlying, overlay, constructor("${name}_merged"))
 }
 
+suspend fun initDatabase() {
+    R2dbcDatabase.connect("r2dbc:h2:file:///./test;DB_CLOSE_DELAY=-1;")
+    R2dbcTransaction.globalInterceptors.add(CustomInterceptor)
+    suspendTransaction {
+        SchemaUtils.create(Tasks)
+//        MutatorQueue.insert { it[mutator] = Increment(1, 2) }
+    }
+}
 @OptIn(FlowPreview::class)
 suspend fun main() {
 //    val jdbcUrl = "jdbc:sqlite:mydatabase.db?journal_mode=WAL&synchronous=OFF&journal_size_limit=500"
 //
-    R2dbcDatabase.connect("r2dbc:h2:file:///./test;DB_CLOSE_DELAY=-1;")
-    R2dbcTransaction.globalInterceptors.add(CustomInterceptor)
+    return
     val tables = suspendTransaction { diffableTable("keyvalue", ::KeyValueTable) }
     val scope = CoroutineScope(Dispatchers.IO).launch {
         tables.overlay.selectAll().observe { toList() }.collect {
@@ -95,10 +112,6 @@ suspend fun main() {
     }
     delay(1.seconds)
     scope.cancel()
-}
-
-fun interface QueryObserver {
-    fun notifyUpdate()
 }
 
 inline fun <T> Query.observe(crossinline collect: suspend Query.() -> T): Flow<T> = channelFlow {

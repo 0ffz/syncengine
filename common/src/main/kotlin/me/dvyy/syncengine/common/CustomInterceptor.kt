@@ -1,5 +1,6 @@
 package me.dvyy.syncengine.common
 
+import me.dvyy.syncengine.common.ui.QueryObserver
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.Transaction
 import org.jetbrains.exposed.v1.core.statements.DeleteStatement

@@ -31,6 +31,7 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-protobuf:3.1.2")
 //    implementation("io.ktor:ktor-server-core:3.1.2")
 
+    api(libs.exposed.json)
     api(libs.exposed.core)
     api(libs.exposed.r2dbc)
     implementation(libs.exposed.datetime)

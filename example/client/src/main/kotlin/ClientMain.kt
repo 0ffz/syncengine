@@ -13,7 +13,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import me.dvyy.syncengine.common.ClientDataStore
 import me.dvyy.syncengine.common.ReversibleDataStore
 import me.dvyy.syncengine.common.SyncClient
@@ -25,14 +24,14 @@ suspend fun main() {
         launch(Dispatchers.IO) {
             startSyncServer()
         }
-    application {
-        Window(onCloseRequest = ::exitApplication) {
-            MainApp()
+        application {
+            Window(onCloseRequest = ::exitApplication) {
+                MainApp()
+            }
+            Window(onCloseRequest = ::exitApplication) {
+                MainApp()
+            }
         }
-        Window(onCloseRequest = ::exitApplication) {
-            MainApp()
-        }
-    }
     }
 }
 

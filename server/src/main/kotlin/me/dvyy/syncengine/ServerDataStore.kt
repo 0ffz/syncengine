@@ -76,7 +76,7 @@ class SqlBackedKeyValueStore : me.dvyy.syncengine.common.KeyValueStore {
     }
 }
 
-object KeyValueTable : LongIdTable() {
+private object KeyValueTable : LongIdTable() {
     val value = text("value")
     val editTime = long("timestamp")//datetime("timestamp").defaultExpression(CurrentDateTime)
 }

@@ -5,19 +5,18 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.toList
 import kotlinx.serialization.json.Json
-import me.dvyy.syncengine.common.mutators.Increment
 import me.dvyy.syncengine.common.mutators.Mutator
 import me.dvyy.syncengine.common.ui.QueryObserver
-import me.dvyy.syncengine.common.ui.Tasks
+import me.dvyy.syncengine.common.ui.TaskTable
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.core.Table.Dual.default
 import org.jetbrains.exposed.v1.core.dao.id.IdTable
 import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
+import org.jetbrains.exposed.v1.dao.EntityClass
+import org.jetbrains.exposed.v1.jdbc.*
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.jsonb
-import org.jetbrains.exposed.v1.r2dbc.*
-import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -26,7 +25,7 @@ private class KeyValueTable(name: String) : LongIdTable(name = name) {
     val editTime = long("timestamp")//datetime("timestamp").defaultExpression(CurrentDateTime)
 }
 
-object MutatorQueue: LongIdTable("test") {
+object MutatorQueue : LongIdTable("test") {
     val mutator = jsonb("mutator", Json, Mutator.serializer())
 }
 
@@ -44,12 +43,12 @@ class DiffableTables<T : IdTable<*>>(
     val overlay: T,
     val view: T,
 ) {
-    suspend fun rollback() {
+    fun rollback() {
         overlay.deleteAll()
     }
 }
 
-suspend fun <T : IdTable<*>> R2dbcTransaction.diffableTable(
+fun <T : IdTable<*>> JdbcTransaction.diffableTable(
     name: String,
     constructor: (String) -> T,
 ): DiffableTables<T> {
@@ -84,26 +83,27 @@ suspend fun <T : IdTable<*>> R2dbcTransaction.diffableTable(
 }
 
 suspend fun initDatabase() {
-    R2dbcDatabase.connect("r2dbc:h2:file:///./test;DB_CLOSE_DELAY=-1;")
-    R2dbcTransaction.globalInterceptors.add(CustomInterceptor)
-    suspendTransaction {
-        SchemaUtils.create(Tasks)
+    Database.connect("r2dbc:h2:file:///./test;DB_CLOSE_DELAY=-1;")
+    JdbcTransaction.globalInterceptors.add(CustomInterceptor)
+    transaction {
+        SchemaUtils.create(TaskTable)
 //        MutatorQueue.insert { it[mutator] = Increment(1, 2) }
     }
 }
+
 @OptIn(FlowPreview::class)
 suspend fun main() {
 //    val jdbcUrl = "jdbc:sqlite:mydatabase.db?journal_mode=WAL&synchronous=OFF&journal_size_limit=500"
 //
     return
-    val tables = suspendTransaction { diffableTable("keyvalue", ::KeyValueTable) }
+    val tables = transaction { diffableTable("keyvalue", ::KeyValueTable) }
     val scope = CoroutineScope(Dispatchers.IO).launch {
         tables.overlay.selectAll().observe { toList() }.collect {
             println("Updated!!$it")
         }
     }
     delay(1.seconds)
-    suspendTransaction {
+    transaction {
 //        registerInterceptor(CustomInterceptor)
 //        underlying.insert { it[value] = "value" }
 //        underlying.insert { it[value] = "value2" }
@@ -111,10 +111,17 @@ suspend fun main() {
 //        println(tables.view.selectAll().toList())
     }
     delay(1.seconds)
-    scope.cancel()
 }
 
-inline fun <T> Query.observe(crossinline collect: suspend Query.() -> T): Flow<T> = channelFlow {
+inline fun <T, C : EntityClass<*, *>> C.observe(crossinline collect: C.() -> T): Flow<T> = observe(listOf(table)) {
+    collect()
+}
+
+inline fun <T> Query.observe(crossinline collect: Query.() -> T): Flow<T> = observe(targets) {
+    collect()
+}
+
+inline fun <T> observe(targets: List<Table>, crossinline collect: Transaction.() -> T): Flow<T> = channelFlow {
     val channel = Channel<Unit>(CONFLATED)
     channel.trySend(Unit)
     val observer = QueryObserver { channel.trySend(Unit) }
@@ -125,7 +132,7 @@ inline fun <T> Query.observe(crossinline collect: suspend Query.() -> T): Flow<T
 
     try {
         for (unit in channel) {
-            suspendTransaction(Dispatchers.IO) { send(this@observe.collect()) }
+            launch(Dispatchers.IO) { send(transaction { (collect()) }) }
         }
     } finally {
         println("removing from $targets")

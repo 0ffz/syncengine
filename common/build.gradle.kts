@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     kotlin("plugin.serialization") version "2.1.20"
+    id("org.jetbrains.kotlinx.benchmark") version "0.4.14"
 //    id("org.jetbrains.kotlinx.rpc.plugin") version "0.6.2"
 }
 tasks {
@@ -13,6 +14,7 @@ dependencies {
 //    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-serialization-cbor:0.6.2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.8.1")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.14")
     // Client API
 //    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-client:0.6.2")
 //    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-client:0.6.2")
@@ -33,10 +35,12 @@ dependencies {
 
     api(libs.exposed.json)
     api(libs.exposed.core)
-    api(libs.exposed.r2dbc)
+    api(libs.exposed.jdbc)
+    api(libs.exposed.dao)
+//    api(libs.exposed.r2dbc)
     implementation(libs.exposed.datetime)
-    implementation(libs.r2dbc.h2)
-    implementation(libs.r2dbc.postgresql)
+//    implementation(libs.r2dbc.h2)
+//    implementation(libs.r2dbc.postgresql)
     implementation("com.h2database:h2:2.2.224")
 //    implementation(libs.exposed.jdbc)
 //    implementation(libs.exposed.json)

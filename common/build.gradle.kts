@@ -41,7 +41,7 @@ dependencies {
     implementation(libs.exposed.datetime)
 //    implementation(libs.r2dbc.h2)
 //    implementation(libs.r2dbc.postgresql)
-    implementation("com.h2database:h2:2.2.224")
+//    implementation("com.h2database:h2:2.2.224")
 //    implementation(libs.exposed.jdbc)
 //    implementation(libs.exposed.json)
     implementation("org.xerial:sqlite-jdbc:3.49.1.0")

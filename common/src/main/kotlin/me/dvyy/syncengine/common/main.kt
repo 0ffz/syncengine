@@ -7,16 +7,23 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.serialization.json.Json
 import me.dvyy.syncengine.common.mutators.Mutator
+import me.dvyy.syncengine.common.ui.ListEntity
+import me.dvyy.syncengine.common.ui.ListItemEntity
+import me.dvyy.syncengine.common.ui.ListItemsTable
+import me.dvyy.syncengine.common.ui.ListTable
 import me.dvyy.syncengine.common.ui.QueryObserver
+import me.dvyy.syncengine.common.ui.TaskEntity
 import me.dvyy.syncengine.common.ui.TaskTable
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.core.Table.Dual.default
 import org.jetbrains.exposed.v1.core.dao.id.IdTable
 import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
+import org.jetbrains.exposed.v1.core.statements.StatementType
 import org.jetbrains.exposed.v1.dao.EntityClass
 import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.jsonb
+import org.sqlite.SQLiteConfig
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -83,18 +90,36 @@ fun <T : IdTable<*>> JdbcTransaction.diffableTable(
 }
 
 suspend fun initDatabase() {
-    Database.connect("r2dbc:h2:file:///./test;DB_CLOSE_DELAY=-1;")
+//    Database.connect("r2dbc:h2:file:///./test;DB_CLOSE_DELAY=-1;")
+    val db =Database.connect("jdbc:sqlite:test.db",
+        setupConnection = { conn ->
+            val sqliteConfig = SQLiteConfig().apply {
+                setJournalMode(SQLiteConfig.JournalMode.WAL)
+            }
+            sqliteConfig.apply(conn)
+        }
+    )
     JdbcTransaction.globalInterceptors.add(CustomInterceptor)
     transaction {
-        SchemaUtils.create(TaskTable)
+        SchemaUtils.create(TaskTable, ListTable, ListItemsTable)
+        exec("PRAGMA journal_mode;", explicitStatementType = StatementType.PRAGMA) {
+            it.next()
+            println("Mode set to ${it.getString(1)}") // Mode set to wal
+        }
 //        MutatorQueue.insert { it[mutator] = Increment(1, 2) }
     }
 }
 
 @OptIn(FlowPreview::class)
 suspend fun main() {
-//    val jdbcUrl = "jdbc:sqlite:mydatabase.db?journal_mode=WAL&synchronous=OFF&journal_size_limit=500"
-//
+    initDatabase()
+    val tasks = transaction {
+        val task = TaskEntity.new { name = "Test Task"; done = false }
+        val list = ListEntity.new { name = "Test List"; }
+        ListItemEntity.new { this.list = list; this.task = task; order = "a" }
+        ListEntity.get(list.id).tasks.mapLazy { it.name }.toList()
+    }
+    println(tasks)
     return
     val tables = transaction { diffableTable("keyvalue", ::KeyValueTable) }
     val scope = CoroutineScope(Dispatchers.IO).launch {
@@ -122,10 +147,10 @@ inline fun <T> Query.observe(crossinline collect: Query.() -> T): Flow<T> = obse
 }
 
 inline fun <T> observe(targets: List<Table>, crossinline collect: Transaction.() -> T): Flow<T> = channelFlow {
+    println("Adding to $targets")
     val channel = Channel<Unit>(CONFLATED)
     channel.trySend(Unit)
     val observer = QueryObserver { channel.trySend(Unit) }
-    println("Adding to $targets")
     targets.forEach {
         CustomInterceptor.listeners.getOrPut(it.tableName) { mutableSetOf() }.add(observer)
     }

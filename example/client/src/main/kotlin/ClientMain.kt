@@ -5,19 +5,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.coroutineScope
-import me.dvyy.syncengine.common.*
+import me.dvyy.syncengine.common.initDatabase
 import me.dvyy.syncengine.common.ui.Task
-import me.dvyy.syncengine.common.ui.TaskEntity
-import me.dvyy.syncengine.common.ui.TaskRepo
-import java.util.*
+import me.dvyy.syncengine.ui.TasksViewModel
 
 suspend fun main() {
     initDatabase()
@@ -37,24 +34,22 @@ suspend fun main() {
 }
 
 @Composable
-fun MainApp() {
-    val store = remember { ClientDataStore(ReversibleDataStore(), CoroutineScope(Dispatchers.IO)) }
-    val syncClient = remember { SyncClient(store) }
+fun MainApp(viewModel: TasksViewModel = viewModel()) {
+//    val store = remember { ClientDataStore(ReversibleDataStore(), CoroutineScope(Dispatchers.IO)) }
+//    val syncClient = remember { SyncClient(store) }
     Scaffold {
-        val tasks by TaskRepo.tasks.collectAsState(initial = emptyList())
+        val tasks by viewModel.allTasks.collectAsState()
         LazyColumn {
             item {
-                Button(onClick = { TaskRepo.new() }) {
-                    Text("Add task")
+                Button(onClick = { viewModel.tasks.new(Task("new", false)) }) {
+                    Text("Add task (total ${viewModel.count.collectAsState(-1).value})")
                 }
             }
             items(tasks, key = { it }) { taskId ->
-                val task by remember { TaskRepo.observe(taskId) }.collectAsState(initial = null)
+                val task by viewModel.tasks.observe(taskId)
                 TextField(task?.name ?: "", onValueChange = { new ->
                     println("Storing $new")
-                    TaskEntity.findByIdAndUpdate(taskId) { it.name = new }
-                    Task.update(taskId, (task ?: Task("", false)).copy(name = it))
-//                store.invoke(MutateText(row = 2, insertAfter = 0, text = it))
+                    viewModel.tasks.mutate(taskId) { it.copy(name = new) }
                 })
             }
         }

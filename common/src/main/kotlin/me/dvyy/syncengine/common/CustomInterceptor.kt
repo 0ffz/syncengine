@@ -31,11 +31,12 @@ object CustomInterceptor: GlobalStatementInterceptor {
 
     override fun afterCommit(transaction: Transaction) {
         editedTables.forEach { table ->
+            println("Notifying ${listeners[table.tableName]?.count() ?: 0} listeners about  ${table.tableName}")
             listeners[table.tableName]?.forEach {
                 it.notifyUpdate()
             }
         }
-        println("Notifying changes to $editedTables")
+        println("Notified of changes to ${editedTables.map { it.tableName }}")
         editedTables.clear()
     }
 }

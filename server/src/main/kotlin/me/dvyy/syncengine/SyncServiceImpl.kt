@@ -2,14 +2,10 @@ package me.dvyy.syncengine
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import me.dvyy.syncengine.common.RowDiff
 import me.dvyy.syncengine.common.SyncRequest
-import me.dvyy.syncengine.common.SyncResult
-import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
-import kotlin.apply
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 class SyncServiceImpl(
     override val coroutineContext: CoroutineContext,
@@ -23,9 +19,8 @@ class SyncServiceImpl(
 //        lastMutatorApplied: Int,
         request: SyncRequest.ApplyMutators,
     ) {
-        if(request.mutators.isEmpty()) return
-        suspendTransaction(db = store.db) {
-            val now = System.currentTimeMillis()
+        if (request.mutators.isEmpty()) return
+        transaction(db = store.db) {
             store.apply(request.mutators)
             //TODO track last applied mutator for client to avoid re-applying
 //            store.getUpdatedSince(now)

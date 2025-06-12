@@ -11,17 +11,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import me.dvyy.syncengine.common.initDatabase
 import me.dvyy.syncengine.common.ui.Task
+import me.dvyy.syncengine.startSyncServer
 import me.dvyy.syncengine.ui.TasksViewModel
 
 suspend fun main() {
-    initDatabase()
     coroutineScope {
-//        launch(Dispatchers.IO) {
-//            startSyncServer()
-//        }
+        launch(Dispatchers.IO) {
+            startSyncServer()
+        }
+        initDatabase()
         application {
 //            Window(onCloseRequest = ::exitApplication) {
 //                MainApp()

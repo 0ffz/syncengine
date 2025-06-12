@@ -2,7 +2,7 @@ package me.dvyy.syncengine.common
 
 import kotlinx.coroutines.flow.MutableSharedFlow
 
-data class ReversibleDataStore(
+data class ReversibleMapBackedDataStore(
     private val underlying: MapBackedKeyValueStore = MapBackedKeyValueStore(),
     private val diff: MapBackedKeyValueStore = MapBackedKeyValueStore()
 ): KeyValueStore {

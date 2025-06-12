@@ -11,8 +11,8 @@ data class Increment(
     val row: Long,
     val value: Int,
 ) : Mutator {
-    override suspend fun mutate(store: KeyValueStore) {
-        store[row] = ((store[row]?.toIntOrNull() ?: 0) + value).toString()
+    override fun mutate() {
+//        store[row] = ((store[row]?.toIntOrNull() ?: 0) + value).toString()
     }
 
     override fun reduce(previous: Mutator): Mutator? {

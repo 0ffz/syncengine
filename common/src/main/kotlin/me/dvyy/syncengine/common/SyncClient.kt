@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.time.Duration.Companion.seconds
 
@@ -47,20 +48,16 @@ class SyncClient(
 //        }
 //    }
 
-    suspend fun clearMutators(amount: Int) {
-        withContext(incomingScope) {
-            repeat(amount) { client.mutatorsCalled.remove() }
-        }
-    }
-
     suspend fun sync() {
-        val mutators = client.mutatorsCalled.toList()
+        val mutators = client.mutatorQueue.getMutatorsToSend()
         val updates = httpClient.post("/sync") {
             contentType(ContentType.Application.ProtoBuf)
             setBody(SyncRequest.ApplyMutators(mutators, client.lastSyncTimestamp))
         }.body<SyncResult.Updates>()
-        clearMutators(mutators.size)
-        client.reconcileDiff(updates)
+        transaction {
+            client.mutatorQueue.clearMutators(mutators.size)
+            client.reconcileDiff(updates)
+        }
 //
 //                    val expectedCount = mutators.size
 //                    sendSerialized<SyncRequest>(SyncRequest.ApplyMutators(mutators))

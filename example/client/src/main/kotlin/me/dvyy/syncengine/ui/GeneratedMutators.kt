@@ -6,27 +6,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import me.dvyy.syncengine.common.mutators.Increment
+import me.dvyy.syncengine.common.mutators.MutatorQueue
+import me.dvyy.syncengine.common.mutators.UpdateTask
 import me.dvyy.syncengine.common.observe
-import me.dvyy.syncengine.common.ui.ListEntity
-import me.dvyy.syncengine.common.ui.Task
-import me.dvyy.syncengine.common.ui.TaskEntity
-import me.dvyy.syncengine.common.ui.TaskTable
-import me.dvyy.syncengine.common.ui.launchTransaction
+import me.dvyy.syncengine.common.ui.*
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.dao.UUIDEntity
 import org.jetbrains.exposed.v1.jdbc.SizedIterable
-import org.jetbrains.exposed.v1.jdbc.mapLazy
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.measureTimedValue
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toKotlinUuid
 
 // UI can safely access this via ViewModel
 open class GeneratedMutators<EntityClass : org.jetbrains.exposed.v1.dao.EntityClass<UUID, Entity>, Entity : UUIDEntity, UI : Any>(
@@ -70,12 +66,14 @@ open class GeneratedMutators<EntityClass : org.jetbrains.exposed.v1.dao.EntityCl
             cachedStates[uuid]?.value = edited
         }
         //TODO track in mutator list
-        launchTransaction {
-            entityClass.findByIdAndUpdate(uuid) {
-                if (edited != null) it.copyToEntity(edited)
-                else it.copyToEntity(toUiState(it))
-            }
-        }
+        globalMutatorQueue.callMutator(UpdateTask(uuid.toKotlinUuid(), edited!! as Task))
+
+//        launchTransaction {
+//            entityClass.findByIdAndUpdate(uuid) {
+//                if (edited != null) it.copyToEntity(edited)
+//                else it.copyToEntity(toUiState(it))
+//            }
+//        }
     }
 
     fun new(uiState: UI) = launchTransaction {
@@ -93,6 +91,8 @@ open class GeneratedMutators<EntityClass : org.jetbrains.exposed.v1.dao.EntityCl
     fun SizedIterable<Entity>.toUiState(): List<UI> = map { toUiState(it) }
 }
 
+val globalMutatorQueue = MutatorQueue()
+
 class TaskMutators(scope: CoroutineScope) : GeneratedMutators<TaskEntity.Companion, TaskEntity, Task>(
     TaskEntity, scope,
     toUiState = { Task(it.name, it.done) },
@@ -103,6 +103,7 @@ data class TaskList(
     val name: String,
     val tasks: List<UUID>,
 )
+
 class TasksViewModel : ViewModel() {
     val tasks = TaskMutators(viewModelScope)
 

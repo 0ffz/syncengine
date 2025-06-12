@@ -28,9 +28,9 @@ dependencies {
     implementation("io.ktor:ktor-server-core:3.1.2")
     implementation("io.ktor:ktor-serialization-kotlinx-protobuf:3.1.2")
 
-    implementation(libs.exposed.dao)
-    implementation(libs.exposed.core)
-    implementation(libs.exposed.r2dbc)
+//    implementation(libs.exposed.dao)
+//    implementation(libs.exposed.core)
+//    implementation(libs.exposed.r2dbc)
 //    implementation(libs.exposed.jdbc)
 //    implementation(libs.exposed.json)
 //    implementation("org.xerial:sqlite-jdbc:3.49.1.0")

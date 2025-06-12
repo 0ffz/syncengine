@@ -1,85 +1,39 @@
 package me.dvyy.syncengine.common
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.protobuf.ProtoBuf
-import me.dvyy.syncengine.common.mutators.Increment
-import me.dvyy.syncengine.common.mutators.Mutator
-import java.util.concurrent.ConcurrentLinkedQueue
+import me.dvyy.syncengine.common.mutators.MutatorQueue
+import me.dvyy.syncengine.common.mutators.MutatorsTable
+import me.dvyy.syncengine.common.ui.launchTransaction
+import org.jetbrains.exposed.v1.jdbc.deleteAll
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 
 typealias EncodedMutator = ByteArray
 
 @OptIn(ExperimentalSerializationApi::class)
 class ClientDataStore(
-    val store: ReversibleDataStore,
+    val store: DiffableTables,
+    val mutatorQueue: MutatorQueue,
     val scope: CoroutineScope,
 ) {
-    //    val encodedMutators = ConcurrentLinkedQueue<EncodedMutator>()
-    val mutatorsCalled = ConcurrentLinkedQueue<Mutator>()
     var lastSyncTimestamp = 0L
 
-    fun invoke(mutator: Mutator) = scope.launch {
-        mutator.invoke()
-    }
-
-    fun incrementCounter() = scope.launch {
-        Increment(1, 1).invoke()
-    }
-
-    fun observe(key: Long): Flow<String?> = store.changes
-        .filter { it.first == key }
-        .map { it.second }
-
-    suspend inline operator fun <reified T : Mutator> T.invoke() {
-//        val reduced = (mutatorsCalled.lastOrNull() as? T)?.let {
-//            this.reduce(it)
+    //TODO withTransactionContext instead of launch
+//    suspend fun reconcileDiff(count: Int, getUpdates: () -> SyncResult.Updates) = launchTransaction {
+//        store.rollback()
+//        var last: SyncResult.Updates? = null
+//        repeat(count) {
+//            last = getUpdates()
+//            store.setUnderlying(last.updates)
 //        }
-//        if (reduced != null) {
-//            encodedMutators.add()
-//            encodedMutators[encodedMutators.lastIndex] = ProtoBuf.encodeToByteArray(Mutator.serializer(), reduced)
-//            mutatorsCalled.[encodedMutators.lastIndex] = reduced
-//        } else {
-//            encodedMutators += ProtoBuf.encodeToByteArray(Mutator.serializer(), this)
-        mutatorsCalled += this
-//        }
-        mutate(store)
-    }
+//        last?.let { lastSyncTimestamp = it.lastChange }
+//        mutatorQueue.reconcileStored()
+//    }.await()
 
-    //    suspend fun reconcileDiff(result: SyncResult) {
-//
-//    }
-    suspend fun reconcileDiff(count: Int, getUpdates: () -> SyncResult.Updates) {
-        store.revert()
-        var last: SyncResult.Updates? = null
-        repeat(count) {
-            last = getUpdates()
-            last.updates.forEach { (row, value) ->
-                store.setUnderlying(row, value)
-            }
-        }
-        last?.let { lastSyncTimestamp = it.lastChange }
-        mutatorsCalled.forEach { it.mutate(store) }
-    }
-
-    suspend fun reconcileDiff(updates: SyncResult.Updates) {
-        store.revert()
-        updates.updates.forEach { (row, value) ->
-            store.setUnderlying(row, value)
-        }
+    fun reconcileDiff(updates: SyncResult.Updates) {
+        store.rollback()
+        store.setUnderlying(updates.updates)
         lastSyncTimestamp = updates.lastChange
-        mutatorsCalled.forEach { it.mutate(store) }
-    }
-
-    companion object {
-        fun decode(encodedMutator: EncodedMutator): Mutator {
-            return ProtoBuf.decodeFromByteArray(Mutator.serializer(), encodedMutator)
-        }
+        mutatorQueue.reconcileStored()
     }
 }
-
-

@@ -50,3 +50,9 @@ dependencies {
     // tests
     testImplementation(kotlin("test"))
 }
+
+kotlin {
+    compilerOptions {
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
+    }
+}

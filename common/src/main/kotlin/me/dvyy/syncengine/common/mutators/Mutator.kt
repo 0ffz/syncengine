@@ -21,6 +21,11 @@ data class UpdateTask(
     val data: Task,
 ) : Mutator {
     override fun mutate() {
-        TaskEntity.findByIdAndUpdate(row.toJavaUuid()) { it.done = data.done; it.name = data.name }
+        TaskEntity.findByIdAndUpdate(row.toJavaUuid()) { it.done = data.done; it.name = data.name } ?: TaskEntity.new(
+            row.toJavaUuid()
+        ) {
+            name = data.name
+            done = data.done
+        }
     }
 }

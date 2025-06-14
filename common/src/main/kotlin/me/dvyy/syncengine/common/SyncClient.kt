@@ -1,19 +1,11 @@
 package me.dvyy.syncengine.common
 
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.http.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -25,7 +17,6 @@ class SyncClient(
     val scope: CoroutineScope = CoroutineScope(Dispatchers.IO),
 ) {
     val httpClient: HttpClient = createHTTPClient()
-    var lastSync = 0L
 
     val incomingScope = Dispatchers.IO.limitedParallelism(1)
     val incomingChanges = ConcurrentLinkedQueue<SyncResult.Updates>()
@@ -49,7 +40,7 @@ class SyncClient(
 //    }
 
     suspend fun sync() {
-        val mutators = client.mutatorQueue.getMutatorsToSend()
+        val mutators = transaction { client.mutatorQueue.getMutatorsToSend() }
         val updates = httpClient.post("/sync") {
             contentType(ContentType.Application.ProtoBuf)
             setBody(SyncRequest.ApplyMutators(mutators, client.lastSyncTimestamp))
@@ -78,36 +69,36 @@ class SyncClient(
     }
 
     init {
-        CoroutineScope(Dispatchers.IO).launch {
-            while (true) {
-//                client.store.changes.receive()
-                println("Sending changes...")
-                sync()
-                println("Sync complete, waiting for changes")
-                delay(1.seconds)
-            }
-            // Constant incoming row changes flow
-//            httpClient.webSocket("/sync") {
-//                val job = launch {
-//                    while (true) {
-//                        client.store.changes.receive() // await a mutator change
-//                        val mutators = client.mutatorsCalled.toList()
-//                        val expectedCount = mutators.size
-//                        sendSerialized<SyncRequest>(SyncRequest.ApplyMutators(mutators))
-//                        val ack = acknowledgedChangeCount.receive()
-//                        //TODO confirm acknowledge count
-//                        repeat(ack.mutatorsAcknowledged) { client.mutatorsCalled.remove() }
-//                        client.reconcileDiff(ack.incomingQueued) { incomingChanges.poll() }
-//                        println("[Client] reconciled state is ${client.store}")
-//                    }
-//                }
-//                incoming.receiveAsFlow().collect { frame ->
-//                    val result = ProtoBuf.Default.decodeFromByteArray(SyncResult.serializer(), frame.data)
-//                    receiveIncoming(result)
-//                }
-//                job.cancel()
+//        CoroutineScope(Dispatchers.IO).launch {
+//            while (true) {
+////                client.store.changes.receive()
+//                println("Sending changes...")
+//                sync()
+//                println("Sync complete, waiting for changes")
+//                delay(1.seconds)
 //            }
-//            println("[Client] disconnected")
-        }
+//            // Constant incoming row changes flow
+////            httpClient.webSocket("/sync") {
+////                val job = launch {
+////                    while (true) {
+////                        client.store.changes.receive() // await a mutator change
+////                        val mutators = client.mutatorsCalled.toList()
+////                        val expectedCount = mutators.size
+////                        sendSerialized<SyncRequest>(SyncRequest.ApplyMutators(mutators))
+////                        val ack = acknowledgedChangeCount.receive()
+////                        //TODO confirm acknowledge count
+////                        repeat(ack.mutatorsAcknowledged) { client.mutatorsCalled.remove() }
+////                        client.reconcileDiff(ack.incomingQueued) { incomingChanges.poll() }
+////                        println("[Client] reconciled state is ${client.store}")
+////                    }
+////                }
+////                incoming.receiveAsFlow().collect { frame ->
+////                    val result = ProtoBuf.Default.decodeFromByteArray(SyncResult.serializer(), frame.data)
+////                    receiveIncoming(result)
+////                }
+////                job.cancel()
+////            }
+////            println("[Client] disconnected")
+//        }
     }
 }

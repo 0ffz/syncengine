@@ -3,11 +3,14 @@ package me.dvyy.syncengine.common.mutators
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.select
 import me.dvyy.syncengine.common.ui.launchTransaction
 import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.inSubQuery
 import org.jetbrains.exposed.v1.core.booleanLiteral
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -48,8 +51,8 @@ class MutatorQueue {
     }
 
     fun clearMutators(count: Int) {
-        val sqlCount = MutatorsTable.deleteWhere(limit = count) {
-            booleanLiteral(true) eq true //TODO simplify
+        val sqlCount = MutatorsTable.deleteWhere {
+            id inSubQuery select(id).limit(count)
         }
         val remaining = sqlCount - count
 //        repeat(remaining) { inMemoryQueue.poll() }

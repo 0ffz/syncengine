@@ -21,10 +21,10 @@ fun Application.configureRouting() {
         post("/sync") {
             // get SyncRequest
             val request = call.receive<SyncRequest.ApplyMutators>()
-//            service.sync(request)
-//            call.respond<SyncResult.Updates>(
-//                store.getUpdatedSince(request.lastSync),
-//            )
+            service.sync(request)
+            call.respond<SyncResult.Updates>(
+                store.getUpdatedSince(request.lastSync),
+            )
 //            when (request) {
 //                is SyncRequest.ChangesSince -> {
 //                    call.respond<SyncResult>(store.getUpdatedSince(request.timestamp))

@@ -2,12 +2,22 @@
 
 package me.dvyy.syncengine
 
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
 import me.dvyy.syncengine.common.RowDiff
 import me.dvyy.syncengine.common.SyncResult
 import me.dvyy.syncengine.common.mutators.Mutator
 import me.dvyy.syncengine.common.ui.Task
+import me.dvyy.syncengine.common.ui.TaskEntity
 import me.dvyy.syncengine.common.ui.TaskTable
 import org.jetbrains.exposed.v1.core.max
+import org.jetbrains.exposed.v1.dao.EntityChangeType
+import org.jetbrains.exposed.v1.dao.EntityHook
+import org.jetbrains.exposed.v1.dao.toEntity
+import org.jetbrains.exposed.v1.datetime.CurrentTimestamp
+import org.jetbrains.exposed.v1.datetime.datetime
+import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.select
@@ -20,11 +30,20 @@ import kotlin.uuid.toKotlinUuid
 class ServerDataStore {
     //    val db =R2dbcDatabase.connect("r2dbc:h2:mem:///regular;DB_CLOSE_DELAY=-1;")
     val db = Database.connect("jdbc:sqlite:server.db")
-    val timestampCol = TaskTable.long("timestamp")
+    val timestampCol = with(TaskTable) { long("timestamp") }
+
+    var TaskEntity.timestamp by timestampCol
 
     init {
-        transaction {
+        transaction(db) {
             SchemaUtils.create(TaskTable)
+        }
+        EntityHook.subscribe { change ->
+            val changedEntity = change.toEntity(TaskEntity) ?: return@subscribe
+            if(change.changeType == EntityChangeType.Updated || change.changeType == EntityChangeType.Created) {
+                changedEntity.timestamp = Clock.System.now().toEpochMilliseconds()
+                println("Changed task $changedEntity at ${Clock.System.now()}")
+            }
         }
     }
 
@@ -35,9 +54,9 @@ class ServerDataStore {
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    fun getUpdatedSince(timestamp: Long): SyncResult.Updates = transaction {
+    fun getUpdatedSince(timestamp: Long): SyncResult.Updates = transaction(db) {
         val updates = TaskTable.selectAll()
-            .where { timestampCol greater timestamp }
+            .where { timestampCol greaterEq timestamp }
             .map {
                 RowDiff(
                     it[TaskTable.id].value.toKotlinUuid(),
@@ -45,9 +64,10 @@ class ServerDataStore {
                 )
             }
             .toList()
-        val lastUpdate = TaskTable.select(timestampCol.max())
+        val max = timestampCol.max()
+        val lastUpdate: Long = TaskTable.select(max)
             .singleOrNull()
-            ?.get(timestampCol)
+            ?.get(max)
             ?: timestamp
         SyncResult.Updates(
             updates,

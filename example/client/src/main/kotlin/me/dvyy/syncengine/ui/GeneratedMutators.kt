@@ -22,6 +22,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.measureTimedValue
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlin.uuid.toKotlinUuid
 
 // UI can safely access this via ViewModel
@@ -76,8 +77,8 @@ open class GeneratedMutators<EntityClass : org.jetbrains.exposed.v1.dao.EntityCl
 //        }
     }
 
-    fun new(uiState: UI) = launchTransaction {
-        entityClass.new { copyToEntity(uiState) }
+    fun new(uiState: UI) {
+        globalMutatorQueue.callMutator(UpdateTask(Uuid.random(), uiState as Task))
     }
 
     fun <T> observe(initial: T, query: EntityClass.() -> T): StateFlow<T> = entityClass

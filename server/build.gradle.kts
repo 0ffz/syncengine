@@ -23,6 +23,7 @@ dependencies {
 //    implementation(libs.ktor.client.core)
 //    implementation(libs.ktor.client.cio)
     implementation(libs.ktor.server.netty)
+    implementation(libs.exposed.datetime)
     implementation("io.ktor:ktor-server-core:3.1.2")
     implementation("io.ktor:ktor-server-websockets:3.1.2")
     implementation("io.ktor:ktor-server-core:3.1.2")

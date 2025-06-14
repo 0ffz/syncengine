@@ -4,9 +4,11 @@ import me.dvyy.syncengine.common.mutators.MutatorsTable.default
 import me.dvyy.syncengine.common.ui.TaskTable
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.dao.id.IdTable
 import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import java.util.*
 import kotlin.uuid.toJavaUuid
 
 class DiffableTables(
@@ -22,10 +24,16 @@ class DiffableTables(
 
     fun setUnderlying(diff: List<RowDiff>) {
         diff.forEach { (row, value) ->
-            val matchesId =TaskTable.id eq row.toJavaUuid()
+            val id = (underlying.id as Column<EntityID<UUID>>)
+            val matchesId = id eq row.toJavaUuid()
             if (value == null) underlying.deleteWhere { matchesId }
             else {
-                underlying.upsert(where = { matchesId }) {
+                val count = underlying.update(where = { matchesId }) {
+                    it[TaskTable.name] = value.name
+                    it[TaskTable.done] = value.done
+                }
+                if (count == 0) underlying.insert {
+                    it[id] = row.toJavaUuid()
                     it[TaskTable.name] = value.name
                     it[TaskTable.done] = value.done
                 }

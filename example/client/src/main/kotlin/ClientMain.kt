@@ -22,15 +22,10 @@ import me.dvyy.syncengine.common.ui.TaskTable
 import me.dvyy.syncengine.ui.TasksViewModel
 
 suspend fun main() {
-    coroutineScope {
-        initDatabase()
-        application {
-//            Window(onCloseRequest = ::exitApplication) {
-//                MainApp()
-//            }
-            Window(onCloseRequest = ::exitApplication) {
-                MainApp()
-            }
+    initDatabase("test.db")
+    application {
+        Window(onCloseRequest = ::exitApplication) {
+            MainApp()
         }
     }
 }

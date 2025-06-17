@@ -37,6 +37,7 @@ open class GeneratedMutators<EntityClass : org.jetbrains.exposed.v1.dao.EntityCl
 
     @Composable
     fun observe(id: UUID): State<UI?> {
+
         val state = remember(id) {
             //TODO notify of updates from DB
             cachedStates.getOrPut(id) {//TODO concurrent map
@@ -51,6 +52,11 @@ open class GeneratedMutators<EntityClass : org.jetbrains.exposed.v1.dao.EntityCl
                         Snapshot.withMutableSnapshot {
                             println("Updated ${state.value} to $uiState")
                             state.value = uiState
+                        }
+                        observe(null) { toUiState(get(id)) }.collect {
+                            Snapshot.withMutableSnapshot {
+                                state.value = it
+                            }
                         }
                     }
                 }

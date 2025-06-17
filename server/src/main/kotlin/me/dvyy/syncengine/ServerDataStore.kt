@@ -3,8 +3,6 @@
 package me.dvyy.syncengine
 
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDateTime
 import me.dvyy.syncengine.common.RowDiff
 import me.dvyy.syncengine.common.SyncResult
 import me.dvyy.syncengine.common.mutators.Mutator
@@ -15,9 +13,6 @@ import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.dao.EntityChangeType
 import org.jetbrains.exposed.v1.dao.EntityHook
 import org.jetbrains.exposed.v1.dao.toEntity
-import org.jetbrains.exposed.v1.datetime.CurrentTimestamp
-import org.jetbrains.exposed.v1.datetime.datetime
-import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.select
@@ -30,7 +25,7 @@ import kotlin.uuid.toKotlinUuid
 class ServerDataStore {
     //    val db =R2dbcDatabase.connect("r2dbc:h2:mem:///regular;DB_CLOSE_DELAY=-1;")
     val db = Database.connect("jdbc:sqlite:server.db")
-    val timestampCol = with(TaskTable) { long("timestamp") }
+    val timestampCol = with(TaskTable) { long("timestamp").clientDefault { Clock.System.now().toEpochMilliseconds() } }
 
     var TaskEntity.timestamp by timestampCol
 
@@ -40,7 +35,7 @@ class ServerDataStore {
         }
         EntityHook.subscribe { change ->
             val changedEntity = change.toEntity(TaskEntity) ?: return@subscribe
-            if(change.changeType == EntityChangeType.Updated || change.changeType == EntityChangeType.Created) {
+            if (change.changeType == EntityChangeType.Updated || change.changeType == EntityChangeType.Created) {
                 changedEntity.timestamp = Clock.System.now().toEpochMilliseconds()
                 println("Changed task $changedEntity at ${Clock.System.now()}")
             }

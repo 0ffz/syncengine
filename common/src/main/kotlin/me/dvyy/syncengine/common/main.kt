@@ -7,20 +7,25 @@ import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
+import me.dvyy.syncengine.common.mutators.MutatorsTable
 import me.dvyy.syncengine.common.ui.QueryObserver
 import me.dvyy.syncengine.common.ui.TaskTable
-import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.Transaction
 import org.jetbrains.exposed.v1.core.statements.StatementType
 import org.jetbrains.exposed.v1.dao.EntityClass
-import org.jetbrains.exposed.v1.jdbc.*
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
+import org.jetbrains.exposed.v1.jdbc.Query
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.sqlite.SQLiteConfig
 
 
-suspend fun initDatabase() {
+suspend fun initDatabase(path: String = "test.db") {
 //    Database.connect("r2dbc:h2:file:///./test;DB_CLOSE_DELAY=-1;")
     val db = Database.connect(
-        "jdbc:sqlite:test.db",
+        "jdbc:sqlite:$path",
         setupConnection = { conn ->
             val sqliteConfig = SQLiteConfig().apply {
                 //https://www.powersync.com/blog/sqlite-optimizations-for-ultra-high-performance
@@ -33,6 +38,8 @@ suspend fun initDatabase() {
     )
     JdbcTransaction.globalInterceptors.add(CustomInterceptor)
     transaction {
+        with(TaskTable.diff) { initialize() }
+        SchemaUtils.create(MutatorsTable)
 //        SchemaUtils.create(TaskTable, ListTable, ListItemsTable, MutatorsTable)
         exec("PRAGMA journal_mode;", explicitStatementType = StatementType.PRAGMA) {
             it.next()

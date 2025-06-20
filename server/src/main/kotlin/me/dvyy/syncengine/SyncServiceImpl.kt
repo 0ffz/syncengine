@@ -2,7 +2,7 @@ package me.dvyy.syncengine
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import me.dvyy.syncengine.common.SyncRequest
+import me.dvyy.syncengine.common.sync.SyncRequest
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime

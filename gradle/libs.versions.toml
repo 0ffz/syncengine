@@ -1,6 +1,6 @@
 [versions]
-compose = "1.8.0"
-kotlin = "2.1.20"
+compose = "1.8.2"
+kotlin = "2.1.21"
 agp = "8.7.3"
 ktor = "3.1.2"
 h2-r2dbc = "1.0.0.RELEASE"

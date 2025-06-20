@@ -7,9 +7,9 @@ import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
-import me.dvyy.syncengine.common.mutators.MutatorsTable
-import me.dvyy.syncengine.common.ui.QueryObserver
-import me.dvyy.syncengine.common.ui.TaskTable
+import me.dvyy.syncengine.common.tables.MutatorsTable
+import me.dvyy.syncengine.common.tables.QueryObserver
+import me.dvyy.syncengine.common.tables.TaskTable
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.Transaction
 import org.jetbrains.exposed.v1.core.statements.StatementType
@@ -19,7 +19,6 @@ import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.sqlite.SQLiteConfig
 
 
 suspend fun initDatabase(path: String = "test.db") {
@@ -27,13 +26,13 @@ suspend fun initDatabase(path: String = "test.db") {
     val db = Database.connect(
         "jdbc:sqlite:$path",
         setupConnection = { conn ->
-            val sqliteConfig = SQLiteConfig().apply {
-                //https://www.powersync.com/blog/sqlite-optimizations-for-ultra-high-performance
-                setJournalMode(SQLiteConfig.JournalMode.WAL)
-                setSynchronous(SQLiteConfig.SynchronousMode.NORMAL)
-                setJournalSizeLimit(6144000)
-            }
-            sqliteConfig.apply(conn)
+//            val sqliteConfig = SQLiteConfig().apply {
+//                //https://www.powersync.com/blog/sqlite-optimizations-for-ultra-high-performance
+//                setJournalMode(SQLiteConfig.JournalMode.WAL)
+//                setSynchronous(SQLiteConfig.SynchronousMode.NORMAL)
+//                setJournalSizeLimit(6144000)
+//            }
+//            sqliteConfig.apply(conn)
         }
     )
     JdbcTransaction.globalInterceptors.add(CustomInterceptor)

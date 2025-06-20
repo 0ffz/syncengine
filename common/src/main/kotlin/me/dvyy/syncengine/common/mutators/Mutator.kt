@@ -2,8 +2,8 @@ package me.dvyy.syncengine.common.mutators
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import me.dvyy.syncengine.common.ui.Task
-import me.dvyy.syncengine.common.ui.TaskEntity
+import me.dvyy.syncengine.common.tables.Task
+import me.dvyy.syncengine.common.tables.TaskEntity
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 

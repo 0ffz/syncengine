@@ -1,11 +1,11 @@
-package me.dvyy.syncengine.common.ui
+package me.dvyy.syncengine.common.tables
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.serialization.Serializable
-import me.dvyy.syncengine.common.DiffableTables
+import me.dvyy.syncengine.common.tables.DiffableTables
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.dao.id.IntIdTable
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable

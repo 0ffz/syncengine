@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm")
+    application
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
 }
@@ -17,4 +18,9 @@ kotlin {
     compilerOptions {
         optIn.add("kotlin.uuid.ExperimentalUuidApi")
     }
+}
+
+
+application {
+    mainClass.set("ClientMainKt")
 }

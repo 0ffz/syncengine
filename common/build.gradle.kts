@@ -44,7 +44,7 @@ dependencies {
 //    implementation("com.h2database:h2:2.2.224")
 //    implementation(libs.exposed.jdbc)
 //    implementation(libs.exposed.json)
-    implementation("org.xerial:sqlite-jdbc:3.49.1.0")
+    implementation("org.xerial:sqlite-jdbc:3.50.1.0")
     implementation(libs.logback)
 
     // tests

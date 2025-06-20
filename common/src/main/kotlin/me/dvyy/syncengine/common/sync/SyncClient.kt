@@ -1,4 +1,4 @@
-package me.dvyy.syncengine.common
+package me.dvyy.syncengine.common.sync
 
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -7,6 +7,8 @@ import io.ktor.http.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.ExperimentalSerializationApi
+import me.dvyy.syncengine.common.ClientDataStore
+import me.dvyy.syncengine.common.createHTTPClient
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.time.Duration.Companion.seconds
@@ -69,14 +71,15 @@ class SyncClient(
     }
 
     init {
-//        CoroutineScope(Dispatchers.IO).launch {
-//            while (true) {
-////                client.store.changes.receive()
-//                println("Sending changes...")
-//                sync()
-//                println("Sync complete, waiting for changes")
-//                delay(1.seconds)
-//            }
+        CoroutineScope(Dispatchers.IO).launch {
+            while (true) {
+//                client.store.changes.receive()
+                println("Sending changes...")
+                sync()
+                println("Sync complete, waiting for changes")
+                delay(1.seconds)
+            }
+        }
 //            // Constant incoming row changes flow
 ////            httpClient.webSocket("/sync") {
 ////                val job = launch {

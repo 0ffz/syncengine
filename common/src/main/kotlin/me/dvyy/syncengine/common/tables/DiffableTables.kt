@@ -1,7 +1,7 @@
-package me.dvyy.syncengine.common
+package me.dvyy.syncengine.common.tables
 
-import me.dvyy.syncengine.common.mutators.MutatorsTable.default
-import me.dvyy.syncengine.common.ui.TaskTable
+import me.dvyy.syncengine.common.sync.RowDiff
+import me.dvyy.syncengine.common.tables.ListItemsTable.default
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.v1.core.dao.id.EntityID

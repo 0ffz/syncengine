@@ -3,12 +3,12 @@
 package me.dvyy.syncengine
 
 import kotlinx.datetime.Clock
-import me.dvyy.syncengine.common.RowDiff
-import me.dvyy.syncengine.common.SyncResult
+import me.dvyy.syncengine.common.sync.RowDiff
+import me.dvyy.syncengine.common.sync.SyncResult
 import me.dvyy.syncengine.common.mutators.Mutator
-import me.dvyy.syncengine.common.ui.Task
-import me.dvyy.syncengine.common.ui.TaskEntity
-import me.dvyy.syncengine.common.ui.TaskTable
+import me.dvyy.syncengine.common.tables.Task
+import me.dvyy.syncengine.common.tables.TaskEntity
+import me.dvyy.syncengine.common.tables.TaskTable
 import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.dao.EntityChangeType
 import org.jetbrains.exposed.v1.dao.EntityHook

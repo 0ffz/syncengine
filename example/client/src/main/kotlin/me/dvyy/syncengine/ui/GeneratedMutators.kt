@@ -9,11 +9,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import me.dvyy.syncengine.common.mutators.Increment
 import me.dvyy.syncengine.common.mutators.MutatorQueue
 import me.dvyy.syncengine.common.mutators.UpdateTask
 import me.dvyy.syncengine.common.observe
-import me.dvyy.syncengine.common.ui.*
+import me.dvyy.syncengine.common.tables.ListEntity
+import me.dvyy.syncengine.common.tables.Task
+import me.dvyy.syncengine.common.tables.TaskEntity
+import me.dvyy.syncengine.common.tables.TaskTable
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.dao.UUIDEntity
 import org.jetbrains.exposed.v1.jdbc.SizedIterable
@@ -21,7 +23,6 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.measureTimedValue
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.uuid.toKotlinUuid
 
@@ -53,11 +54,14 @@ open class GeneratedMutators<EntityClass : org.jetbrains.exposed.v1.dao.EntityCl
                             println("Updated ${state.value} to $uiState")
                             state.value = uiState
                         }
-                        observe(null) { toUiState(get(id)) }.collect {
-                            Snapshot.withMutableSnapshot {
-                                state.value = it
+                        observe(null) { toUiState(get(id)) }
+                            .onCompletion { println("Done collecting $id") }
+                            .collect {
+                                println("Collected $id")
+                                Snapshot.withMutableSnapshot {
+                                    state.value = it
+                                }
                             }
-                        }
                     }
                 }
             }

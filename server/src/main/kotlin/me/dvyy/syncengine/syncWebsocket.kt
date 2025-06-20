@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.protobuf.ProtoBuf
-import me.dvyy.syncengine.common.SyncRequest
-import me.dvyy.syncengine.common.SyncResult
+import me.dvyy.syncengine.common.sync.SyncRequest
+import me.dvyy.syncengine.common.sync.SyncResult
 
 fun Routing.syncWebsocket() {
     val store = ServerDataStore()

@@ -11,14 +11,13 @@ import androidx.compose.ui.window.application
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import me.dvyy.syncengine.common.ClientDataStore
-import me.dvyy.syncengine.common.SyncClient
+import me.dvyy.syncengine.common.sync.SyncClient
 import me.dvyy.syncengine.common.initDatabase
 import me.dvyy.syncengine.common.mutators.MutatorQueue
-import me.dvyy.syncengine.common.ui.Task
-import me.dvyy.syncengine.common.ui.TaskTable
+import me.dvyy.syncengine.common.tables.Task
+import me.dvyy.syncengine.common.tables.TaskTable
 import me.dvyy.syncengine.ui.TasksViewModel
 
 suspend fun main() {

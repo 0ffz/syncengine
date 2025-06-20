@@ -3,11 +3,9 @@ package me.dvyy.syncengine.common.mutators
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.selects.select
-import me.dvyy.syncengine.common.ui.launchTransaction
-import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
+import me.dvyy.syncengine.common.tables.MutatorsTable
+import me.dvyy.syncengine.common.tables.launchTransaction
 import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.inSubQuery
-import org.jetbrains.exposed.v1.core.booleanLiteral
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select

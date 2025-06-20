@@ -1,4 +1,4 @@
-package me.dvyy.syncengine.common
+package me.dvyy.syncengine.common.sync
 
 import kotlinx.serialization.Serializable
 import me.dvyy.syncengine.common.mutators.Mutator

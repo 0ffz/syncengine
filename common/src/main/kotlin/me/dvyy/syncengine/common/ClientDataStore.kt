@@ -3,10 +3,8 @@ package me.dvyy.syncengine.common
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.ExperimentalSerializationApi
 import me.dvyy.syncengine.common.mutators.MutatorQueue
-import me.dvyy.syncengine.common.mutators.MutatorsTable
-import me.dvyy.syncengine.common.ui.launchTransaction
-import org.jetbrains.exposed.v1.jdbc.deleteAll
-import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import me.dvyy.syncengine.common.sync.SyncResult
+import me.dvyy.syncengine.common.tables.DiffableTables
 
 typealias EncodedMutator = ByteArray
 

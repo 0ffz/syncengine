@@ -41,7 +41,6 @@ suspend fun main() {
     CoroutineScope(Dispatchers.IO).launch {
         Database.read {
             subtaskRelation.relatedTo(id)
-            delay(100)
         }
     }
     Database.write {

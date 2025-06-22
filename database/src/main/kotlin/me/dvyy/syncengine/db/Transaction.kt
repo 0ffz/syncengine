@@ -26,7 +26,7 @@ open class Transaction(
     }
 
     inline fun SQLiteStatement.bindParams(vararg params: Any) {
-        params.forEachIndexed { i, it -> bindAny(i, it) }
+        params.forEachIndexed { i, it -> bindAny(i + 1, it) }
     }
 
     inline fun <T> getSingle(

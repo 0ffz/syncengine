@@ -33,17 +33,14 @@ class JsonTableDAO<T>(
         id: UUID,
         @Language("JSON") patchString: String,
     ) {
-        tx.prepare(
+        tx.exec(
             """
             INSERT INTO $table(id, data)
             VALUES (?, jsonb(?)) 
             ON CONFLICT DO UPDATE SET 
             data = jsonb_patch(data, jsonb(excluded.data))
-            """.trimIndent()
-        ) {
-            bindUuid(1, id)
-            bindText(2, patchString)
-            step()
-        }
+            """.trimIndent(),
+            id, patchString
+        )
     }
 }

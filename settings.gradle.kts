@@ -6,8 +6,10 @@ pluginManagement {
         maven("https://packages.jetbrains.team/maven/p/amper/amper")
         maven("https://www.jetbrains.com/intellij-repository/releases")
         maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+        maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
     }
 }
+
 
 //plugins {
 //    id("org.jetbrains.amper.settings.plugin").version("0.6.0")
@@ -20,3 +22,4 @@ include(":android-app")
 include(":common")
 include(":server")
 include(":example:client")
+include(":database")

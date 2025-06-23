@@ -18,10 +18,6 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.*
 import kotlin.time.measureTimedValue
 
-fun interface QueryObserver {
-    fun notifyUpdate()
-}
-
 private val dbScope = CoroutineScope(Dispatchers.IO.limitedParallelism(1))
 
 fun <T> launchTransaction(run: JdbcTransaction.() -> T): Deferred<T> = dbScope.async {

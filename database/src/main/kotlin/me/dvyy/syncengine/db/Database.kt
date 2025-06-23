@@ -1,31 +1,29 @@
 package me.dvyy.syncengine.db
 
 import androidx.sqlite.SQLiteConnection
-import androidx.sqlite.SQLiteStatement
 import androidx.sqlite.driver.bundled.*
 import androidx.sqlite.execSQL
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.newFixedThreadPoolContext
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.withContext
-
-class LoggingConnection(val delegate: SQLiteConnection) : SQLiteConnection by delegate {
-    override fun prepare(sql: String): SQLiteStatement {
-        println("Prepared SQL: $sql")
-        return delegate.prepare(sql)
-    }
-}
+import me.dvyy.syncengine.db.tables.TableReading
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 //TODO handle separate connections for async reads and single write
 open class Database(
     private val driver: BundledSQLiteDriver,
     private val readConnections: Int = 4,
     private val path: String,
+    val watchQueryThrottle: Duration = 100.milliseconds
 ) {
     val writeConnection = createConnection(readOnly = false)
     val readerConnectionPool = Channel<Lazy<SQLiteConnection>>(readConnections)
     val dbWriteDispatcher = newSingleThreadContext("db-writes")
     val dbReadDispatcher = newFixedThreadPoolContext(readConnections, "db-reads")
+    val observers = DatabaseObservers()
 
     fun createConnection(readOnly: Boolean): SQLiteConnection {
         //FIXME readonly errors
@@ -58,9 +56,10 @@ open class Database(
     suspend inline fun <T> write(
         crossinline block: WriteTransaction.() -> T,
     ): T = withContext(dbWriteDispatcher) {
+        val tx = WriteTransaction(writeConnection)
         writeConnection.transaction {
-            WriteTransaction(writeConnection).block()
-        }
+            tx.block()
+        }.also { observers.notify(tx.modifiedTables) }
     }
 
     suspend inline fun <T> read(
@@ -76,9 +75,18 @@ open class Database(
         }
     }
 
+    inline fun <T> watch(
+        vararg tables: TableReading,
+        crossinline read: Transaction.() -> T,
+    ) = flow {
+        emit(Database.read { read() })
+        observers.forTables(TableReading.reduce(tables.toSet())).throttle(watchQueryThrottle).collect {
+            emit(Database.read { read() })
+        }
+    }
+
     companion object : Database(
         driver = BundledSQLiteDriver(),
         path = "test.db"
     )
 }
-

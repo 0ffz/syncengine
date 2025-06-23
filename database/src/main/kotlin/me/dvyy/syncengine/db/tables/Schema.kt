@@ -15,8 +15,8 @@ object TasksView : View(
         cast(data ->> '$.name' as TEXT) AS name,
         cast(data ->> '$.age' as INTEGER) as age
     from jsondata
-    WHERE age is not null;
-    """.trimIndent()
+    """.trimIndent(),
+    setOf(JsonTable)
 )
 
 object SubtaskRelation : Table(

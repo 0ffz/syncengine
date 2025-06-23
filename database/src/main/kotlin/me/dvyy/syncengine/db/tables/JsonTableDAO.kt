@@ -10,7 +10,7 @@ import java.util.*
 
 class JsonTableDAO<T>(
     val serializer: KSerializer<T>,
-    val table: String,
+    val table: TableReading,
     val json: Json = Json,
 ) {
     context(tx: Transaction)
@@ -42,5 +42,6 @@ class JsonTableDAO<T>(
             """.trimIndent(),
             id, patchString
         )
+        tx.modified(table)
     }
 }

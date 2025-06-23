@@ -2,12 +2,18 @@ package me.dvyy.syncengine.db
 
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.SQLiteStatement
+import me.dvyy.syncengine.db.tables.Table
+import me.dvyy.syncengine.db.tables.TableReading
 import org.intellij.lang.annotations.Language
 import kotlin.coroutines.RestrictsSuspension
 
 @RestrictsSuspension
 class WriteTransaction(connection: SQLiteConnection) : Transaction(connection) {
+    val modifiedTables = mutableSetOf<Table>()
 
+    fun modified(vararg tables: TableReading) {
+        modifiedTables.addAll(TableReading.reduce(tables.toSet()))
+    }
 }
 
 @RestrictsSuspension

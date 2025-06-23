@@ -4,16 +4,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 import me.dvyy.syncengine.db.tables.*
 import java.util.*
-import kotlin.time.measureTime
 import kotlin.uuid.ExperimentalUuidApi
-
-suspend fun createSchema(tables: List<Table>, views: List<View>) = Database.write {
-    tables.forEach { exec(it.createStatement) }
-    views.forEach { exec("CREATE VIEW IF NOT EXISTS ${it::class.simpleName} AS ${it.selectStatement}") }
-}
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun main() {
@@ -21,33 +14,57 @@ suspend fun main() {
         tables = listOf(JsonTable, MutatorsTable, SubtaskRelation),
         views = listOf(TasksView)
     )
-    repeat(100) {
-        Database.read {
-            measureTime {
-                buildList {
-                    prepare("SELECT name FROM task") {
-                        while (step()) {
-                            add(getText(0))
-                        }
-                    }
-                }
-            }.let { println(it) }
-        }
-    }
-    val tasks = JsonTableDAO(Task.serializer(), "jsondata")
+//    CoroutineScope(Dispatchers.IO).launch {
+//        Database.watch(TasksView) { getList("SELECT name FROM $TasksView") { getText(0) } }.collect {
+//            println("Got: $it")
+//        }
+//    }
+//    repeat(100) {
+//        Database.read {
+//            measureTime {
+//                buildList {
+//                    prepare("SELECT name FROM task") {
+//                        while (step()) {
+//                            add(getText(0))
+//                        }
+//                    }
+//                }
+//            }.let { println(it) }
+//        }
+//    }
+    delay(1000)
+    val tasks = JsonTableDAO(Task.serializer(), JsonTable)
     val subtaskRelation = RelationTableDAO<Task>()
 
     val id = UUID.randomUUID()
-    CoroutineScope(Dispatchers.IO).launch {
-        Database.read {
-            subtaskRelation.relatedTo(id)
-        }
-    }
-    Database.write {
-        tasks.mutate(id, Task("hey world", false))
-        println(tasks.get(id))
-    }
+//    CoroutineScope(Dispatchers.IO).launch {
+//        Database.read {
+//            subtaskRelation.relatedTo(id)
+//        }
+//    }
+
+//    Database.write {
+//        repeat(100) {
+//            tasks.mutate(UUID.randomUUID(), Task("task $it"))
+//        }
+//    }
+//    repeat(100) {
+//        CoroutineScope(Dispatchers.IO).launch {
+//            Database.read {
+//                println(getList("SELECT name FROM $TasksView") { getText(0) })
+//            }
+//        }
+//
+//    }
+//    repeat(100) {
+//        Database.write {
+//            val first = prepare("SELECT id FROM jsondata LIMIT 1") { step(); getBlob(0) }
+//            exec("DELETE FROM jsondata WHERE id = ?", first)
+////            tasks.mutate(id, Task("hey world", false))
+////            println(tasks.get(id))
+//        }
+//    }
+//    delay(1000)
 }
 
-@Serializable
-data class Task(val name: String, val done: Boolean = false)
+// FROM powersync-kmp client

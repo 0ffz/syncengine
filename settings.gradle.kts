@@ -1,3 +1,5 @@
+rootProject.name = "syncengine"
+
 pluginManagement {
     repositories {
         mavenCentral()

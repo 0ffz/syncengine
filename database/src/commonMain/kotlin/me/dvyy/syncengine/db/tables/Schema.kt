@@ -1,23 +1,5 @@
 package me.dvyy.syncengine.db.tables
 
-object JsonTable : Table(
-    """
-    CREATE TABLE IF NOT EXISTS jsondata (
-        id BLOB PRIMARY KEY,
-        data BLOB
-    )
-    """.trimIndent()
-)
-
-object TasksView : View(
-    """
-    SELECT
-        cast(data ->> '$.name' as TEXT) AS name,
-        cast(data ->> '$.age' as INTEGER) as age
-    from jsondata
-    """.trimIndent(),
-    setOf(JsonTable)
-)
 
 object SubtaskRelation : Table(
     """

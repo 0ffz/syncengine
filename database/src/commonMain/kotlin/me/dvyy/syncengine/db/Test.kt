@@ -1,19 +1,16 @@
 package me.dvyy.syncengine.db
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import me.dvyy.syncengine.db.tables.*
 import java.util.*
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun main() {
-    createSchema(
-        tables = listOf(JsonTable, MutatorsTable, SubtaskRelation),
-        views = listOf(TasksView)
-    )
+//    createSchema(
+//        tables = listOf(JsonTable, MutatorsTable, SubtaskRelation),
+//        views = listOf(TasksView)
+//    )
 //    CoroutineScope(Dispatchers.IO).launch {
 //        Database.watch(TasksView) { getList("SELECT name FROM $TasksView") { getText(0) } }.collect {
 //            println("Got: $it")
@@ -33,8 +30,8 @@ suspend fun main() {
 //        }
 //    }
     delay(1000)
-    val tasks = JsonTableDAO(Task.serializer(), JsonTable)
-    val subtaskRelation = RelationTableDAO<Task>()
+//    val tasks = JsonTableDAO(Task.serializer(), JsonTable)
+//    val subtaskRelation = RelationTableDAO<Task>()
 
     val id = UUID.randomUUID()
 //    CoroutineScope(Dispatchers.IO).launch {

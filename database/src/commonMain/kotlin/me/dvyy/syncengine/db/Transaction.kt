@@ -14,6 +14,10 @@ class WriteTransaction(connection: SQLiteConnection) : Transaction(connection) {
     fun modified(vararg tables: TableReading) {
         modifiedTables.addAll(TableReading.reduce(tables.toSet()))
     }
+
+    fun modified(vararg tables: String) {
+        TODO("Implement getting tables by name")
+    }
 }
 
 @RestrictsSuspension
@@ -39,12 +43,20 @@ open class Transaction(
         @Language("SQLite") sql: String,
         vararg parameters: Any,
         statement: SQLiteStatement.() -> T,
-    ): T {
-        return prepare(sql) {
-            bindParams(*parameters)
-            step()
-            statement()
-        }
+    ): T = prepare(sql) {
+        bindParams(*parameters)
+        step()
+        statement()
+    }
+
+    inline fun <T> getOrNull(
+        @Language("SQLite") sql: String,
+        vararg parameters: Any,
+        statement: SQLiteStatement.() -> T,
+    ): T? = prepare(sql) {
+        bindParams(*parameters)
+        if (!step()) return null
+        statement()
     }
 
     inline fun <T> getList(@Language("SQLite") sql: String, statement: SQLiteStatement.() -> T): List<T> = buildList {

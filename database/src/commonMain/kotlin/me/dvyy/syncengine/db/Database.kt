@@ -87,6 +87,6 @@ open class Database(
 
     companion object : Database(
         driver = BundledSQLiteDriver(),
-        path = "test.db"
+        path = "/var/home/offz/projects/syncengine/test.db"
     )
 }

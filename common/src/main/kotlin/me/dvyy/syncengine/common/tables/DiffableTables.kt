@@ -68,43 +68,5 @@ class DiffableTables(
                     }
             )
             .prepareSQL(this).also { println(it) }
-        exec("CREATE VIEW IF NOT EXISTS $viewName AS $mergedView")
-        exec(
-            """
-        CREATE TRIGGER  IF NOT EXISTS ${viewName}_redirect_insert
-        INSTEAD OF INSERT ON $viewName
-        FOR EACH ROW
-        BEGIN
-            INSERT INTO ${overlay.tableName} (${overlay.columns.joinToString(",") { it.name }})
-            VALUES (${underlying.columns.joinToString(",") { "NEW.${it.name}" }}, FALSE);
-        END;
-    """.trimIndent()
-        )
-
-        exec(
-            """
-        CREATE TRIGGER  IF NOT EXISTS ${viewName}_redirect_delete
-        INSTEAD OF DELETE ON $viewName
-        FOR EACH ROW
-        BEGIN
-            INSERT INTO ${overlay.tableName} (id, removed)
-            VALUES (OLD.id, TRUE)
-            ON CONFLICT(id) DO UPDATE SET removed = TRUE;
-        END;
-    """.trimIndent()
-        )
-
-        exec(
-            """
-        CREATE TRIGGER  IF NOT EXISTS ${viewName}_redirect_update
-        INSTEAD OF UPDATE ON $viewName
-        FOR EACH ROW
-        BEGIN
-            INSERT INTO ${overlay.tableName} (${overlay.columns.joinToString(",") { it.name }})
-            VALUES (${underlying.columns.joinToString(",") { "NEW.${it.name}" }}, FALSE)
-            ON CONFLICT DO UPDATE SET ${underlying.columns.joinToString(",") { "${it.name} = NEW.${it.name}" }};
-        END;
-    """.trimIndent()
-        )
     }
 }

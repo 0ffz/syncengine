@@ -14,11 +14,15 @@ kotlin {
         commonMain {
             dependencies {
                 dependencies {
-                    api("androidx.sqlite:sqlite-bundled:2.5.2")
+                    implementation(projects.database)
                     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+                    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.8.1")
                     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
                 }
             }
         }
+    }
+    sourceSets.commonMain.dependencies {
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:null")
     }
 }

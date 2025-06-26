@@ -32,20 +32,7 @@ dependencies {
     implementation("io.ktor:ktor-client-content-negotiation:3.1.2")
     implementation("io.ktor:ktor-serialization-kotlinx-protobuf:3.1.2")
 //    implementation("io.ktor:ktor-server-core:3.1.2")
-
-//    api(libs.exposed.json)
-    api(libs.exposed.core)
-//    api(libs.exposed.jdbc)
-//    api(libs.exposed.dao)
-//    api(libs.exposed.r2dbc)
-//    implementation(libs.exposed.datetime)
-//    implementation(libs.r2dbc.h2)
-//    implementation(libs.r2dbc.postgresql)
-//    implementation("com.h2database:h2:2.2.224")
-//    implementation(libs.exposed.jdbc)
-//    implementation(libs.exposed.json)
-//    implementation("org.xerial:sqlite-jdbc:3.50.1.0")
-    implementation(libs.logback)
+//    implementation(libs.logback)
 
     // tests
     testImplementation(kotlin("test"))

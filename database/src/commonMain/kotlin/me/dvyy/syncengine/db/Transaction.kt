@@ -59,8 +59,13 @@ open class Transaction(
         statement()
     }
 
-    inline fun <T> getList(@Language("SQLite") sql: String, statement: SQLiteStatement.() -> T): List<T> = buildList {
+    inline fun <T> getList(
+        @Language("SQLite") sql: String,
+        vararg parameters: Any,
+        statement: SQLiteStatement.() -> T,
+    ): List<T> = buildList {
         prepare(sql) {
+            bindParams(*parameters)
             while (step()) {
                 add(statement())
             }

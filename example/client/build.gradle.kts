@@ -7,7 +7,7 @@ plugins {
 
 dependencies {
     implementation(project(":common"))
-    implementation(project(":server"))
+//    implementation(project(":server"))
     implementation(compose.desktop.currentOs)
     implementation(compose.material3)
     implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0")

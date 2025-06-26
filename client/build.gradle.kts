@@ -14,11 +14,10 @@ kotlin {
         commonMain {
             dependencies {
                 dependencies {
-                    api(projects.database)
+                    implementation(projects.core)
+                    implementation(projects.database)
                     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
                     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-//                    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.8.1")
-//                    implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.8.1")
                 }
             }
         }

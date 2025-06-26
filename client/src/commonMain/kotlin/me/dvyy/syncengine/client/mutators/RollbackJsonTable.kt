@@ -1,28 +1,27 @@
-package me.dvyy.syncengine.schema
+package me.dvyy.syncengine.client.mutators
 
 import me.dvyy.syncengine.db.WriteTransaction
 import me.dvyy.syncengine.db.tables.TableReading
 import me.dvyy.syncengine.db.tables.View
+import me.dvyy.syncengine.schema.JsonTable
 
-class RollbackTable(
-    builder: TableBuilder,
+class RollbackJsonTable(
+    from: JsonTable,
 ) : TableReading {
-    val name = builder.name
+    override val name = from.name
+    val underlying = JsonTable("${name}_underlying")
+    val overlay = JsonTable("${name}_overlay")
+    override val involves: Set<TableReading> = setOf(underlying, overlay)
 
     context(tx: WriteTransaction)
     override fun create() {
         underlying.create()
         overlay.create()
         merged.create()
-        extracted.create()
     }
 
-    val underlying = builder.buildNamed("${name}_underlying")
-    val overlay = builder.buildNamed("${name}_overlay")
-    override val involves: Set<TableReading> = setOf(underlying, overlay)
-
-    val merged: View = View(
-        "${name}_merged",
+    private val merged: View = View(
+        name,
         """
         SELECT ${underlying.columns.joinToString(",") { "coalesce(o.$it, u.$it) as $it" }}
         FROM $underlying u
@@ -32,12 +31,6 @@ class RollbackTable(
         """.trimIndent(),
         involves = setOf(underlying, overlay)
     )
-
-    val extracted: View = View(
-        name,
-        builder.buildNamed(name).viewStatement(from = "${name}_merged"),
-        involves = setOf(underlying, overlay)
-    ) //TODO make indexes
 
     context(tx: WriteTransaction)
     fun rollback() {

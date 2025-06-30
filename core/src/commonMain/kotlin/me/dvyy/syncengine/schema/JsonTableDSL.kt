@@ -51,5 +51,5 @@ fun schema(
     shared: Set<JsonTable> = setOf(),
     views: Set<View> = setOf(),
 ): Schema {
-    return Schema(shared.map { RollbackJsonTable(it) }, views.toList())
+    return Schema(shared.toList(), views.toList())
 }

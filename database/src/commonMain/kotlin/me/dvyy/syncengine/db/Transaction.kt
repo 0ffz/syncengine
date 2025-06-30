@@ -18,6 +18,10 @@ class WriteTransaction(connection: SQLiteConnection) : Transaction(connection) {
     fun modified(vararg tables: String) {
         TODO("Implement getting tables by name")
     }
+
+    fun insert(@Language("SQLite", prefix = "INSERT ") statement: String) {
+
+    }
 }
 
 @RestrictsSuspension

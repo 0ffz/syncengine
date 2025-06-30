@@ -18,6 +18,7 @@ class RollbackJsonTable(
         underlying.create()
         overlay.create()
         merged.create()
+        createTriggers()
     }
 
     private val merged: View = View(
@@ -39,45 +40,44 @@ class RollbackJsonTable(
 
     override fun toString(): String = name
 
-//    context(tx: WriteTransaction)
-//    fun createTriggers() {
-//        tx.exec("CREATE VIEW IF NOT EXISTS $viewName AS $mergedView")
-//        tx.exec(
-//            """
-//        CREATE TRIGGER  IF NOT EXISTS ${viewName}_redirect_insert
-//        INSTEAD OF INSERT ON $viewName
-//        FOR EACH ROW
-//        BEGIN
-//            INSERT INTO ${overlay.tableName} (${overlay.columns.joinToString(",") { it.name }})
-//            VALUES (${underlying.columns.joinToString(",") { "NEW.${it.name}" }}, FALSE);
-//        END;
-//    """.trimIndent()
-//        )
-//
-//        exec(
-//            """
-//        CREATE TRIGGER  IF NOT EXISTS ${viewName}_redirect_delete
-//        INSTEAD OF DELETE ON $viewName
-//        FOR EACH ROW
-//        BEGIN
-//            INSERT INTO ${overlay.tableName} (id, removed)
-//            VALUES (OLD.id, TRUE)
-//            ON CONFLICT(id) DO UPDATE SET removed = TRUE;
-//        END;
-//    """.trimIndent()
-//        )
-//
-//        exec(
-//            """
-//        CREATE TRIGGER  IF NOT EXISTS ${viewName}_redirect_update
-//        INSTEAD OF UPDATE ON $viewName
-//        FOR EACH ROW
-//        BEGIN
-//            INSERT INTO ${overlay.tableName} (${overlay.columns.joinToString(",") { it.name }})
-//            VALUES (${underlying.columns.joinToString(",") { "NEW.${it.name}" }}, FALSE)
-//            ON CONFLICT DO UPDATE SET ${underlying.columns.joinToString(",") { "${it.name} = NEW.${it.name}" }};
-//        END;
-//    """.trimIndent()
-//        )
-//    }
+    context(tx: WriteTransaction)
+    private fun createTriggers() {
+        tx.exec(
+            """
+            CREATE TRIGGER IF NOT EXISTS ${merged}_redirect_insert
+            INSTEAD OF INSERT ON $merged
+            FOR EACH ROW
+            BEGIN
+                INSERT INTO $overlay (${overlay.columns.joinToString(",")})
+                VALUES (${underlying.columns.joinToString(",") { "NEW.${it}" }});
+            END;
+            """.trimIndent()
+        )
+
+        tx.exec(
+            """
+            CREATE TRIGGER  IF NOT EXISTS ${merged}_redirect_delete
+            INSTEAD OF DELETE ON $merged
+            FOR EACH ROW
+            BEGIN
+                INSERT INTO $overlay (id, data)
+                VALUES (OLD.id, jsonb('null'))
+                ON CONFLICT(id) DO UPDATE SET data = jsonb('null');
+            END;
+            """.trimIndent()
+        )
+
+        tx.exec(
+            """
+            CREATE TRIGGER  IF NOT EXISTS ${merged}_redirect_update
+            INSTEAD OF UPDATE ON $merged
+            FOR EACH ROW
+            BEGIN
+                INSERT INTO $overlay (${overlay.columns.joinToString(",")})
+                VALUES (${underlying.columns.joinToString(",") { "NEW.${it}" }})
+                ON CONFLICT DO UPDATE SET ${underlying.columns.joinToString(",") { "${it} = NEW.${it}" }};
+            END;
+            """.trimIndent()
+        )
+    }
 }

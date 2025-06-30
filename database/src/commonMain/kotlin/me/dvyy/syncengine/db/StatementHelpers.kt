@@ -10,6 +10,9 @@ import kotlin.uuid.toKotlinUuid
 fun SQLiteStatement.bindUuid(index: Int, uuid: Uuid) = bindBlob(index, uuid.toByteArray())
 
 @OptIn(ExperimentalUuidApi::class)
+fun SQLiteStatement.getUuid(index: Int) = Uuid.fromByteArray(getBlob(index))
+
+@OptIn(ExperimentalUuidApi::class)
 fun SQLiteStatement.bindAny(index: Int, value: Any) = when (value) {
     is Int -> bindInt(index, value)
     is Long -> bindLong(index, value)

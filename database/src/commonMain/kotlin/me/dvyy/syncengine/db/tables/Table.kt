@@ -31,6 +31,15 @@ open class View(
 
     context(tx: WriteTransaction)
     override fun create() {
-        tx.exec("CREATE VIEW IF NOT EXISTS $name AS $selectStatement")
+        val existing = tx.getOrNull(
+            "SELECT sql FROM sqlite_master WHERE type = 'view' AND name = '$name'"
+        ) { getText(0) }
+        val statement = "CREATE VIEW $name AS $selectStatement"
+        if (existing != statement) {
+            tx.exec("DROP VIEW $name")
+            tx.exec(statement)
+        }
     }
+
+    override fun toString() = name
 }

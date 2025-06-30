@@ -13,7 +13,7 @@ class JsonTable(
     CREATE TABLE IF NOT EXISTS $name (
         id BLOB PRIMARY KEY,
         data BLOB
-    )
+    ) STRICT
     """.trimIndent(),
 ) {
     val columns: Set<String> = setOf("id", "data")

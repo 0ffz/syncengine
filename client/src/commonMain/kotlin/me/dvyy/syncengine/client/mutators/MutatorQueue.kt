@@ -14,13 +14,14 @@ class MutatorQueue<T, M : AbstractMutator<T>>(
     val db: T,
     val mutatorSerializer: KSerializer<M>,
 ) : Mutators<M> {
-    @OptIn(ExperimentalUuidApi::class)
 //    val protobuf = ProtoBuf {
 //        serializersModule = SerializersModule {
 ////            contextual(JsonElement::class, JsonElementAsStringSerializer)
 ////            contextual(Uuid::class, UuidSerializer)
 //        }
 //    }
+    private var previous: AbstractMutator<T>? = null
+
     override suspend fun invoke(mutator: M) = Database.write {
         mutator.mutate(db) //TODO merge with last if possible
 
@@ -39,29 +40,21 @@ class MutatorQueue<T, M : AbstractMutator<T>>(
 
     context(tx: WriteTransaction)
     fun append(mutator: M) {
-        val previous = getLast()
-        val reduced = if (previous != null) mutator.reduce(previous.second) else null
-        if (previous != null && reduced != null) {
+        val reduced = previous?.let { mutator.reduce(it) }
+        if (reduced != null) {
             // replace last mutator with reduced
             tx.exec(
-                "UPDATE mutators SET data = jsonb(?) WHERE id = ?",
+                "UPDATE mutators SET data = jsonb(?) WHERE id = (SELECT max(id) FROM mutators)",
                 Json.encodeToString(mutatorSerializer, mutator),
-                previous.first
             )
+            previous = reduced
         } else {
             // add as new mutator
             tx.exec("INSERT INTO mutators(data) VALUES (jsonb(?))", Json.encodeToString(mutatorSerializer, mutator))
+            previous = mutator
         }
 //        tx.exec("INSERT INTO mutators(data) VALUES (?)", protobuf.encodeToByteArray(mutatorSerializer, mutator))
     }
-
-    context(tx: WriteTransaction)
-    fun getLast(): Pair<Int, M>? {
-        return tx.getOrNull("SELECT id, json(data) FROM mutators ORDER BY id DESC LIMIT 1") {
-            getInt(0) to getMutator(1)
-        }
-    }
-
 
     context(tx: Transaction)
     fun getAllEncoded() = tx.getList("SELECT data FROM mutators") { getBlob(0) }

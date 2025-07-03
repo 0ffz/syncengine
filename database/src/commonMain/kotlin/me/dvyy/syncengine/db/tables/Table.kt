@@ -36,10 +36,20 @@ open class View(
         ) { getText(0) }
         val statement = "CREATE VIEW $name AS $selectStatement"
         if (existing != statement) {
-            tx.exec("DROP VIEW $name")
+            if (existing != null) tx.exec("DROP VIEW $name")
             tx.exec(statement)
         }
     }
 
     override fun toString() = name
+}
+
+data class SqliteIndex(
+    @param:Language("SQLite")
+    val statement: String,
+) {
+    context(tx: WriteTransaction)
+    fun create() {
+        tx.exec(statement)
+    }
 }

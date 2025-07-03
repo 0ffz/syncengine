@@ -14,6 +14,7 @@ class ViewBuilder(
         id,
         ${columns.joinToString(",\n") { it.toStatement() }}
         FROM $from
+        WHERE data != jsonb('null')
     """.trimIndent()
 
     fun indexStatements() = columns.joinToString(";\n") {

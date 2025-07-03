@@ -1,81 +1,81 @@
 package me.dvyy.syncengine.client.mutators
 
 import me.dvyy.syncengine.db.WriteTransaction
-import me.dvyy.syncengine.db.tables.TableReading
-import me.dvyy.syncengine.db.tables.View
+import me.dvyy.syncengine.db.tables.Table
 import me.dvyy.syncengine.schema.JsonTable
 
 class RollbackJsonTable(
     from: JsonTable,
-) : TableReading {
+) : Table(
+    """
+    CREATE TABLE IF NOT EXISTS ${from.name} (
+        id BLOB PRIMARY KEY,
+        data BLOB,
+        original_data BLOB
+    ) STRICT;
+    """.trimIndent(),
+) {
     override val name = from.name
-    val underlying = JsonTable("${name}_underlying")
-    val overlay = JsonTable("${name}_overlay")
-    override val involves: Set<TableReading> = setOf(underlying, overlay)
 
     context(tx: WriteTransaction)
     override fun create() {
-        underlying.create()
-        overlay.create()
-        merged.create()
+        super.create()
         createTriggers()
     }
 
-    private val merged: View = View(
-        name,
-        """
-        SELECT ${underlying.columns.joinToString(",") { "coalesce(o.$it, u.$it) as $it" }}
-        FROM $underlying u
-        FULL OUTER JOIN $overlay o
-        ON u.id = o.id
-        WHERE o.data is not jsonb('null')
-        """.trimIndent(),
-        involves = setOf(underlying, overlay)
-    )
-
     context(tx: WriteTransaction)
     fun rollback() {
-        tx.exec("DELETE FROM $overlay")
+        tx.exec(
+            """
+            DELETE FROM $name WHERE original_data = jsonb('null');
+            UPDATE $name SET
+                data = original_data,
+                original_data = NULL
+            WHERE original_data IS NOT NULL;
+        """.trimIndent()
+        )
     }
 
     override fun toString(): String = name
 
     context(tx: WriteTransaction)
     private fun createTriggers() {
+        //TODO manage updating as needed
         tx.exec(
             """
-            CREATE TRIGGER IF NOT EXISTS ${merged}_redirect_insert
-            INSTEAD OF INSERT ON $merged
-            FOR EACH ROW
+            CREATE TRIGGER IF NOT EXISTS ${name}_redirect_delete
+                BEFORE DELETE
+                ON $name
+                FOR EACH ROW
+                WHEN old.original_data IS NOT jsonb('null')
             BEGIN
-                INSERT INTO $overlay (${overlay.columns.joinToString(",")})
-                VALUES (${underlying.columns.joinToString(",") { "NEW.${it}" }});
+                UPDATE $name SET data = jsonb('null') WHERE id = old.id;
+                SELECT raise(ignore);
             END;
             """.trimIndent()
         )
 
         tx.exec(
             """
-            CREATE TRIGGER  IF NOT EXISTS ${merged}_redirect_delete
-            INSTEAD OF DELETE ON $merged
-            FOR EACH ROW
+            CREATE TRIGGER IF NOT EXISTS ${name}_redirect_update
+                BEFORE UPDATE
+                ON $name
+                FOR EACH ROW
+                WHEN old.original_data IS NULL
             BEGIN
-                INSERT INTO $overlay (id, data)
-                VALUES (OLD.id, jsonb('null'))
-                ON CONFLICT(id) DO UPDATE SET data = jsonb('null');
+                UPDATE $name SET original_data = old.data WHERE id = old.id;
             END;
             """.trimIndent()
         )
 
         tx.exec(
             """
-            CREATE TRIGGER  IF NOT EXISTS ${merged}_redirect_update
-            INSTEAD OF UPDATE ON $merged
-            FOR EACH ROW
+            CREATE TRIGGER IF NOT EXISTS ${name}_redirect_insert
+                AFTER INSERT
+                ON $name
+                FOR EACH ROW
             BEGIN
-                INSERT INTO $overlay (${overlay.columns.joinToString(",")})
-                VALUES (${underlying.columns.joinToString(",") { "NEW.${it}" }})
-                ON CONFLICT DO UPDATE SET ${underlying.columns.joinToString(",") { "${it} = NEW.${it}" }};
+                UPDATE $name SET original_data = jsonb('null') WHERE id = new.id;
             END;
             """.trimIndent()
         )

@@ -2,6 +2,7 @@ package me.dvyy.syncengine.client.mutators
 
 import me.dvyy.syncengine.db.WriteTransaction
 import me.dvyy.syncengine.db.tables.Table
+import me.dvyy.syncengine.db.tables.TableReading
 import me.dvyy.syncengine.schema.JsonTable
 
 class RollbackJsonTable(
@@ -16,6 +17,8 @@ class RollbackJsonTable(
     """.trimIndent(),
 ) {
     override val name = from.name
+
+    override val involves: Set<TableReading> = setOf(from)
 
     context(tx: WriteTransaction)
     override fun create() {

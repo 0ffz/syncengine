@@ -28,3 +28,9 @@ kotlin {
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:null")
     }
 }
+
+kotlin {
+    compilerOptions {
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
+    }
+}

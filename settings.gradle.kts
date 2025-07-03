@@ -26,7 +26,7 @@ plugins {
 //include(":jvm-app")
 //include(":shared")
 //include(":common")
-//include(":server")
+include(":server")
 //include(":example:client")
 include(":database")
 include(":core", ":client")

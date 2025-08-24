@@ -14,7 +14,7 @@ kotlin {
         commonMain {
             dependencies {
                 dependencies {
-                    api(projects.database)
+                    api("me.dvyy:sqlite-kt:0.0.2-alpha.6")
                     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
                     implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.8.1")
                     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")

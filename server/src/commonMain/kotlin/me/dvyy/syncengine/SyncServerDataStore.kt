@@ -2,7 +2,7 @@
 
 package me.dvyy.syncengine
 
-import me.dvyy.syncengine.db.Database
+import me.dvyy.sqlite.Database
 import me.dvyy.syncengine.schema.ServerSchema
 import kotlin.time.ExperimentalTime
 

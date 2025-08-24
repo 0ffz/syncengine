@@ -28,5 +28,5 @@ plugins {
 //include(":common")
 include(":server")
 //include(":example:client")
-include(":database")
+//include(":database")
 include(":core", ":client")

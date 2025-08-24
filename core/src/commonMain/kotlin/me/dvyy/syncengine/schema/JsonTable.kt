@@ -1,6 +1,6 @@
 package me.dvyy.syncengine.schema
 
-import me.dvyy.syncengine.db.tables.Table
+import me.dvyy.sqlite.tables.Table
 
 enum class SqliteDataType {
     NULL, INTEGER, REAL, TEXT, BLOB

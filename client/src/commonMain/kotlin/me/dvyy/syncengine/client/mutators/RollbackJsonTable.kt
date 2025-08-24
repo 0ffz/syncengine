@@ -1,8 +1,8 @@
 package me.dvyy.syncengine.client.mutators
 
-import me.dvyy.syncengine.db.WriteTransaction
-import me.dvyy.syncengine.db.tables.Table
-import me.dvyy.syncengine.db.tables.TableReading
+import me.dvyy.sqlite.WriteTransaction
+import me.dvyy.sqlite.tables.Table
+import me.dvyy.sqlite.tables.TableReading
 import me.dvyy.syncengine.schema.JsonTable
 
 class RollbackJsonTable(
@@ -12,6 +12,7 @@ class RollbackJsonTable(
     CREATE TABLE IF NOT EXISTS ${from.name} (
         id BLOB PRIMARY KEY,
         data BLOB,
+        owner INTEGER NOT NULL,
         original_data BLOB
     ) STRICT;
     """.trimIndent(),

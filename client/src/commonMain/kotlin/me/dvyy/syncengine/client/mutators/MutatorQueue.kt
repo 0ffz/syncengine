@@ -3,18 +3,18 @@ package me.dvyy.syncengine.client.mutators
 import androidx.sqlite.SQLiteStatement
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
-import me.dvyy.syncengine.db.Database
-import me.dvyy.syncengine.db.Transaction
-import me.dvyy.syncengine.db.WriteTransaction
+import me.dvyy.sqlite.Database
+import me.dvyy.sqlite.Transaction
+import me.dvyy.sqlite.WriteTransaction
 import me.dvyy.syncengine.schema.AbstractMutator
 import me.dvyy.syncengine.schema.Mutators
-import kotlin.uuid.ExperimentalUuidApi
 
 class MutatorQueue<T, M : AbstractMutator<T>>(
-    val db: T,
+    val db: Database,
+    val dao: T,
     val mutatorSerializer: KSerializer<M>,
 ) : Mutators<M> {
-//    val protobuf = ProtoBuf {
+    //    val protobuf = ProtoBuf {
 //        serializersModule = SerializersModule {
 ////            contextual(JsonElement::class, JsonElementAsStringSerializer)
 ////            contextual(Uuid::class, UuidSerializer)
@@ -22,8 +22,8 @@ class MutatorQueue<T, M : AbstractMutator<T>>(
 //    }
     private var previous: AbstractMutator<T>? = null
 
-    override suspend fun invoke(mutator: M) = Database.write {
-        mutator.mutate(db) //TODO merge with last if possible
+    override suspend fun invoke(mutator: M) = db.write {
+        mutator.mutate(dao) //TODO merge with last if possible
 
         append(mutator)
     }
@@ -37,6 +37,9 @@ class MutatorQueue<T, M : AbstractMutator<T>>(
             run(getMutator(0))
         }
     }
+
+    context(tx: WriteTransaction)
+    fun invokeAllStored() = forEachMutator { it.mutate(dao) }
 
     context(tx: WriteTransaction)
     fun append(mutator: M) {
@@ -58,4 +61,12 @@ class MutatorQueue<T, M : AbstractMutator<T>>(
 
     context(tx: Transaction)
     fun getAllEncoded() = tx.getList("SELECT data FROM mutators") { getBlob(0) }
+
+    context(tx: Transaction)
+    fun firstMutatorId() = tx.getOrNull("SELECT min(id) FROM mutators") { getLong(0) }
+
+    context(tx: WriteTransaction)
+    fun clearAcknowledged(lastAcknowledged: Long) {
+        tx.exec("DELETE FROM mutators WHERE id <= ?", lastAcknowledged)
+    }
 }

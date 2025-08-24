@@ -15,7 +15,11 @@ kotlin {
             dependencies {
                 dependencies {
                     implementation(projects.core)
-                    implementation(projects.database)
+                    implementation(libs.ktor.client.core)
+                    implementation(libs.ktor.client.cio)
+//                    implementation("io.ktor:ktor-client-websockets:3.1.2")
+//                    implementation("io.ktor:ktor-client-content-negotiation:3.1.2")
+//                    implementation("io.ktor:ktor-serialization-kotlinx-protobuf:3.1.2")
                     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
                     implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.8.1")
                     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")

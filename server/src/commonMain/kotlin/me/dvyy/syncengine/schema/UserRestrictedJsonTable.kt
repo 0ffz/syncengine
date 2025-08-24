@@ -1,12 +1,12 @@
 package me.dvyy.syncengine.schema
 
-import me.dvyy.syncengine.db.WriteTransaction
-import me.dvyy.syncengine.db.tables.Table
+import me.dvyy.sqlite.WriteTransaction
+import me.dvyy.sqlite.tables.Table
 
 class UserRestrictedJsonTable(from: JsonTable) : Table(
     """
     CREATE TABLE IF NOT EXISTS ${from.name} (
-        id BLOB PRIMARY KEY,
+        id BLOB NOT NULL PRIMARY KEY,
         data BLOB,
         owner INTEGER NOT NULL,
         frame INTEGER NOT NULL DEFAULT (strftime('%s','now') || substr(strftime('%f','now'),4))

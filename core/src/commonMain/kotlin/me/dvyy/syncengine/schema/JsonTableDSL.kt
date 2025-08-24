@@ -1,7 +1,7 @@
 package me.dvyy.syncengine.schema
 
-import me.dvyy.syncengine.db.tables.Table
-import me.dvyy.syncengine.db.tables.View
+import me.dvyy.sqlite.tables.Table
+import me.dvyy.sqlite.tables.View
 
 class ViewBuilder(
     val from: Table,

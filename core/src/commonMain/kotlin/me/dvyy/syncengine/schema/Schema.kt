@@ -2,7 +2,7 @@
 
 package me.dvyy.syncengine.schema
 
-import me.dvyy.syncengine.db.tables.View
+import me.dvyy.sqlite.tables.View
 import kotlin.uuid.ExperimentalUuidApi
 
 class Schema(

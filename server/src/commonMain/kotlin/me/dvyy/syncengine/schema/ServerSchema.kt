@@ -1,7 +1,7 @@
 package me.dvyy.syncengine.schema
 
-import me.dvyy.syncengine.db.WriteTransaction
-import me.dvyy.syncengine.db.tables.View
+import me.dvyy.sqlite.WriteTransaction
+import me.dvyy.sqlite.tables.View
 
 class ServerSchema(schema: Schema) {
     val syncedTables: List<UserRestrictedJsonTable> = schema.syncedTables.map { UserRestrictedJsonTable(it) }

@@ -1,6 +1,6 @@
 package me.dvyy.syncengine.schema
 
-import me.dvyy.syncengine.db.WriteTransaction
+import me.dvyy.sqlite.WriteTransaction
 
 interface AbstractMutator<T> {
     context(tx: WriteTransaction)

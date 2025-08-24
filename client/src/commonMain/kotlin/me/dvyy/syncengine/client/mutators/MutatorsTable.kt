@@ -1,8 +1,8 @@
 package me.dvyy.syncengine.client.mutators
 
-import me.dvyy.syncengine.db.tables.Table
+import me.dvyy.sqlite.tables.Table
 
-object MutatorsTable : Table(
+val MutatorsTable = Table(
     """
     CREATE TABLE IF NOT EXISTS mutators(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -10,3 +10,4 @@ object MutatorsTable : Table(
     ) STRICT
     """.trimIndent()
 )
+

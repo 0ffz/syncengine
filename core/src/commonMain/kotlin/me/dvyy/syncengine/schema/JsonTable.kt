@@ -12,9 +12,12 @@ class JsonTable(
     """
     CREATE TABLE IF NOT EXISTS $name (
         id BLOB PRIMARY KEY,
-        data BLOB
+        data BLOB,
+        modified BLOB
     ) STRICT;
     """.trimIndent(),
 ) {
+    //TODO create trigger to update modified automatically
+
     val columns: Set<String> = setOf("id", "data")
 }

@@ -21,12 +21,6 @@ kotlin {
 //                    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.8.1")
 //                    implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.8.1")
 
-                    implementation(libs.ktor.server.netty)
-                    implementation("io.ktor:ktor-server-core:3.1.2")
-                    implementation("io.ktor:ktor-server-websockets:3.1.2")
-                    implementation("io.ktor:ktor-server-core:3.1.2")
-                    implementation("io.ktor:ktor-serialization-kotlinx-protobuf:3.1.2")
-
                 }
             }
         }

@@ -12,6 +12,7 @@ import me.dvyy.syncengine.schema.Schema
 import me.dvyy.syncengine.sync.SyncRequest
 import me.dvyy.syncengine.sync.SyncResult
 import me.dvyy.syncengine.sync.SyncService
+import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * Entrypoint for client syncengine.
@@ -50,11 +51,13 @@ class SyncClient(
     }
 
 
+    @OptIn(ExperimentalUuidApi::class)
     context(tx: Transaction)
     internal fun getSyncRequest() = SyncRequest(
-        (lastFrameSeen.getString()?.toLong() ?: 0L),
-        mutators.getAllEncoded(),
-        mutators.firstMutatorId(),
+        clientId = TODO(),
+        lastFrameSeen = (lastFrameSeen.getString()?.toLong() ?: 0L),
+        encodedMutators = mutators.getAllEncoded(),
+        firstMutatorId = mutators.firstMutatorId(),
     )
 
     context(tx: WriteTransaction)

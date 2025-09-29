@@ -33,6 +33,10 @@ class ViewBuilder(
         columns += Column(name, SqliteDataType.REAL)
     }
 
+    fun blob(name: String) {
+        columns += Column(name, SqliteDataType.BLOB)
+    }
+
     fun build(): View = View(name, viewStatement(from.name), involves = setOf(from))
 }
 

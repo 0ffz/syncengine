@@ -5,6 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class SyncResult(
     val serverFrame: Long,
-    val changes: List<RowChanges>,
+    val changes: List<TableChanges>,
     val lastMutatorIdApplied: Long,
 )

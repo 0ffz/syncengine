@@ -9,17 +9,17 @@ import me.dvyy.sqlite.WriteTransaction
 import me.dvyy.syncengine.schema.AbstractMutator
 import me.dvyy.syncengine.schema.Mutators
 
+/**
+ * Mutators are operations ran in-order to modify a client's state.
+ *
+ * These are stored locally in a table via this MutatorQueue until a sync occurs,
+ * when they are read and sent off to the server to apply, being cleared once the server confirms a sync request
+ */
 class MutatorQueue<T, M : AbstractMutator<T>>(
     val db: Database,
     val dao: T,
     val mutatorSerializer: KSerializer<M>,
 ) : Mutators<M> {
-    //    val protobuf = ProtoBuf {
-//        serializersModule = SerializersModule {
-////            contextual(JsonElement::class, JsonElementAsStringSerializer)
-////            contextual(Uuid::class, UuidSerializer)
-//        }
-//    }
     private var previous: AbstractMutator<T>? = null
 
     override suspend fun invoke(mutator: M) = db.write {
@@ -63,7 +63,9 @@ class MutatorQueue<T, M : AbstractMutator<T>>(
     fun getAllEncoded() = tx.getList("SELECT data FROM mutators") { getBlob(0) }
 
     context(tx: Transaction)
-    fun firstMutatorId() = tx.getOrNull("SELECT min(id) FROM mutators") { getLong(0) }
+    fun firstMutatorId(): Long = tx
+        .getOrNull("SELECT min(id) FROM mutators") { getLong(0) }
+        ?: -1
 
     context(tx: WriteTransaction)
     fun clearAcknowledged(lastAcknowledged: Long) {

@@ -1,12 +1,16 @@
 package me.dvyy.syncengine.sync
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
 import kotlin.uuid.Uuid
 
 @Serializable
-data class RowChanges(
+data class TableChanges(
     val table: String,
+    val changes: List<RowChange>,
+)
+
+@Serializable
+data class RowChange(
     val row: Uuid,
-    val data: JsonElement,
+    val data: ByteArray,
 )

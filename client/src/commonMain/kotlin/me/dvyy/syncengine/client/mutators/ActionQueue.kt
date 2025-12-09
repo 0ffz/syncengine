@@ -8,7 +8,7 @@ import me.dvyy.sqlite.Transaction
 import me.dvyy.sqlite.WriteTransaction
 import me.dvyy.syncengine.actions.Action
 import me.dvyy.syncengine.actions.Actions
-import me.dvyy.syncengine.client.schema.ClientDatabase
+import me.dvyy.syncengine.client.schema.ClientQueries
 import me.dvyy.syncengine.reducers.Reducers
 
 /**
@@ -21,7 +21,7 @@ class ActionQueue(
     private val db: Database,
     private val reducers: Reducers,
 ) : Actions {
-    private val dao: ClientDatabase = ClientDatabase()
+    private val queries = ClientQueries()
     private val json = Json {
         serializersModule = reducers.serializersModule
     }
@@ -56,23 +56,23 @@ class ActionQueue(
         val reduced = previous?.let { action.reduce(it) }
         if (reduced != null) {
             // replace last mutator with reduced
-            dao.actions.updateLastAction(json.encodeToString(actionSerializer, action))
+            queries.actions.updateLastAction(json.encodeToString(actionSerializer, action))
             previous = reduced
         } else {
             // add as new mutator
-            dao.actions.append(json.encodeToString(actionSerializer, action))
+            queries.actions.append(json.encodeToString(actionSerializer, action))
             previous = action
         }
     }
 
     context(tx: Transaction)
-    fun getAllEncoded(): List<ByteArray> = dao.actions.getAll().map { getBlob(0) }
+    fun getAllEncoded(): List<ByteArray> = queries.actions.getAll().map { getBlob(0) }
 
     context(tx: Transaction)
-    fun firstMutatorId(): Long = dao.actions.firstActionId().firstOrNull { getLong(0) } ?: -1
+    fun firstMutatorId(): Long = queries.actions.firstActionId().firstOrNull { getLong(0) } ?: -1
 
     context(tx: WriteTransaction)
     fun clearAcknowledged(lastAcknowledged: Long) {
-        dao.actions.clearAcknowledged(lastAcknowledged)
+        queries.actions.clearAcknowledged(lastAcknowledged)
     }
 }

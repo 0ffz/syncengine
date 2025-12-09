@@ -18,7 +18,7 @@ class ServerActionProcessor(
 ) {
     private val actionSerializer = PolymorphicSerializer(Action::class)
     private val json = Json { serializersModule = reducers.serializersModule }
-    private val server = ServerDatabase()
+    private val server = ServerQueries()
 
     @OptIn(ExperimentalUuidApi::class)
     context(tx: WriteTransaction)

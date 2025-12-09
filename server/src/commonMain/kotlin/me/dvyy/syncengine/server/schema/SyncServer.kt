@@ -47,7 +47,7 @@ class SyncServer(
     suspend fun initialize() = db.write {
         syncedTables.forEach { it.create() }
         views.forEach { it.create() }
-        ServerDatabase().create()
+        ServerQueries().create()
     }
 
     @OptIn(ExperimentalUuidApi::class)

@@ -5,7 +5,7 @@ import kotlin.uuid.Uuid
 
 @Serializable
 data class SyncRequest(
-    val clientId: Uuid,
+    val deviceId: Uuid,
     val lastFrameSeen: Long,
     val encodedMutators: List<ByteArray>,
     val firstMutatorId: Long,

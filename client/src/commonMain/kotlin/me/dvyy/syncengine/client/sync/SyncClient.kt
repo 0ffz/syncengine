@@ -13,10 +13,12 @@ import me.dvyy.syncengine.sync.SyncRequest
 import me.dvyy.syncengine.sync.SyncResult
 import me.dvyy.syncengine.sync.SyncService
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * Entrypoint for client syncengine.
  */
+@OptIn(ExperimentalUuidApi::class)
 class SyncClient(
     private val db: Database,
     private val mutators: MutatorQueue<*, *>,
@@ -26,12 +28,14 @@ class SyncClient(
     val syncedTables = schema.syncedTables.map { RollbackJsonTable(it) }
     val views = schema.views
     val lastFrameSeen = KVStoreProperty("lastFrameSeen", KVStore)
+    val deviceId = KVStoreProperty("deviceId", KVStore)
 
     suspend fun initialize() = db.write {
         MutatorsTable.create()
         KVStore.create()
         syncedTables.forEach { it.create() }
         views.forEach { it.create() }
+        deviceId.setString(Uuid.random().toHexString())
     }
 
     suspend fun sync() {
@@ -54,7 +58,7 @@ class SyncClient(
     @OptIn(ExperimentalUuidApi::class)
     context(tx: Transaction)
     internal fun getSyncRequest() = SyncRequest(
-        clientId = TODO(),
+        deviceId = Uuid.parseHex(deviceId.getString()!!),
         lastFrameSeen = (lastFrameSeen.getString()?.toLong() ?: 0L),
         encodedMutators = mutators.getAllEncoded(),
         firstMutatorId = mutators.firstMutatorId(),

@@ -1,20 +1,21 @@
 package me.dvyy.syncengine.schema
 
-import me.dvyy.sqlite.tables.Table
+import me.dvyy.sqlite.WriteTransaction
 
 enum class SqliteDataType {
     NULL, INTEGER, REAL, TEXT, BLOB
 }
 
-class JsonTable(
-    override val name: String,
-) : Table(
-    """
-    CREATE TABLE IF NOT EXISTS $name (
-        id BLOB PRIMARY KEY,
-        data BLOB
-    ) STRICT;
-    """.trimIndent(),
-) {
-    val columns: Set<String> = setOf("id", "data")
+open class JsonTable(val name: String) {
+    context(tx: WriteTransaction)
+    open fun create() {
+        tx.exec(
+            """
+            CREATE TABLE IF NOT EXISTS $name (
+                id BLOB PRIMARY KEY,
+                data BLOB
+            ) STRICT;
+            """.trimIndent()
+        )
+    }
 }

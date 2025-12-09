@@ -5,6 +5,7 @@ import kotlinx.serialization.json.Json
 import me.dvyy.sqlite.Transaction
 import me.dvyy.sqlite.WriteTransaction
 import me.dvyy.syncengine.schema.AbstractMutator
+import me.dvyy.syncengine.server.schema.ServerDatabase
 import me.dvyy.syncengine.sync.SyncRequest
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -16,15 +17,16 @@ class MutatorApplier<T, M : AbstractMutator<T>>(
     val dao: T,
     val mutatorSerializer: KSerializer<M>,
 ) {
+    private val server = ServerDatabase()
+
     @OptIn(ExperimentalUuidApi::class)
     context(tx: WriteTransaction)
     fun applyMutations(request: SyncRequest) {
         val mutators = request.encodedMutators
 
         // Last mutator we've applied on the server
-        val lastApplied = tx
-            .select("SELECT last_mutator_applied FROM $ClientsView")
-            .firstOrNull { getLong(0) }
+        val lastApplied = server.clients.getLastMutatorApplied(request.deviceId, tx.identity)
+            .firstOrNull { getLong(it.last_mutator_applied) }
             ?: -1
         // Last mutator applied after this transaction completes (will update previous value)
         val lastAppliedAfterTransaction = mutators.lastIndex + request.firstMutatorId
@@ -45,10 +47,7 @@ class MutatorApplier<T, M : AbstractMutator<T>>(
         //TODO ensure clienttable populated before this
 
         // Write last mutator applied for this client
-        tx.exec(
-            "UPDATE $ClientsTable SET data = jsonb_set(data, 'last_mutator_applied', ?) WHERE uuid = ?",
-            lastAppliedAfterTransaction, request.clientId
-        )
+        server.clients.setLastMutatorApplied(lastAppliedAfterTransaction, uuid = request.deviceId, owner = tx.identity)
     }
 
     context(tx: Transaction)

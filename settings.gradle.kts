@@ -11,6 +11,7 @@ pluginManagement {
         maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
     }
+    includeBuild("../sqlite-kt")
 }
 
 plugins {
@@ -30,3 +31,5 @@ include(":server")
 //include(":example:client")
 //include(":database")
 include(":core", ":client")
+
+includeBuild("../sqlite-kt")

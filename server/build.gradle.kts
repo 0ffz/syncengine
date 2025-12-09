@@ -2,11 +2,13 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlinx.serialization)
     `maven-publish`
+    id("me.dvyy.sqlite.codegen")
 }
 
 kotlin {
     compilerOptions {
         freeCompilerArgs.add("-Xcontext-parameters")
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
     }
     jvm()
 
@@ -61,3 +63,8 @@ kotlin {
 //    // tests
 //    testImplementation(kotlin("test"))
 //}
+sqliteKt {
+    register("server") {
+        packageName = "me.dvyy.syncengine.server.schema"
+    }
+}

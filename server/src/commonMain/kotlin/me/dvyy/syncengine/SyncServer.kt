@@ -10,6 +10,7 @@ import me.dvyy.sqlite.statement.getUuid
 import me.dvyy.sqlite.tables.View
 import me.dvyy.syncengine.schema.Schema
 import me.dvyy.syncengine.schema.UserRestrictedJsonTable
+import me.dvyy.syncengine.server.schema.ServerDatabase
 import me.dvyy.syncengine.sync.*
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
@@ -45,9 +46,10 @@ class SyncServer(
         }
     }
 
-    internal suspend fun initialize() = db.write {
+    suspend fun initialize() = db.write {
         syncedTables.forEach { it.create() }
         views.forEach { it.create() }
+        ServerDatabase().create()
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -55,7 +57,7 @@ class SyncServer(
     internal fun getUpdatedSince(frame: Long): List<TableChanges> = schema.syncedTables.map { table ->
         TableChanges(
             table = table.name,
-            changes = tx.select("SELECT uuid, data FROM $table WHERE owner = ? AND frame >= ?", tx.identity, frame)
+            changes = tx.select("SELECT id, data FROM $table WHERE frame >= ? AND owner = ?", tx.identity, frame)
                 .map {
                     RowChange(
                         row = getUuid(0),
@@ -65,15 +67,17 @@ class SyncServer(
         )
     }
 
+    var frame = 0L
+
     //TODO consider any way of masking server frame from users when no changes relevant to them occur.
     context(tx: Transaction)
     internal fun getServerFrame(): Long {
-        TODO()
+        return frame
     }
 
     context(tx: WriteTransaction)
-    internal fun incrementServerFrame(): Long {
-        TODO()
+    internal fun incrementServerFrame() {
+        frame++
     }
 }
 

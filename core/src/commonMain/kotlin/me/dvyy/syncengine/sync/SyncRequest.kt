@@ -7,7 +7,7 @@ import kotlin.uuid.Uuid
 data class SyncRequest(
     val deviceId: Uuid,
     val lastFrameSeen: Long,
-    val encodedMutators: List<ByteArray>,
-    val firstMutatorId: Long,
+    val encodedActions: List<ByteArray>,
+    val firstActionId: Long,
 )
 

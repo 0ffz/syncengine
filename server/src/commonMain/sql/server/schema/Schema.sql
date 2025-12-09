@@ -2,5 +2,5 @@ CREATE TABLE clients
 (
     uuid                 BLOB PRIMARY KEY,
     owner                INTEGER NOT NULL,
-    last_mutator_applied INTEGER
+    last_action_applied INTEGER
 ) STRICT;

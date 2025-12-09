@@ -1,16 +1,14 @@
 @file:OptIn(ExperimentalTime::class)
 
-package me.dvyy.syncengine
+package me.dvyy.syncengine.server.schema
 
 import me.dvyy.sqlite.Database
 import me.dvyy.sqlite.Identity
 import me.dvyy.sqlite.Transaction
 import me.dvyy.sqlite.WriteTransaction
 import me.dvyy.sqlite.statement.getUuid
-import me.dvyy.sqlite.tables.View
+import me.dvyy.syncengine.schema.JsonView
 import me.dvyy.syncengine.schema.Schema
-import me.dvyy.syncengine.schema.UserRestrictedJsonTable
-import me.dvyy.syncengine.server.schema.ServerDatabase
 import me.dvyy.syncengine.sync.*
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
@@ -18,28 +16,28 @@ import kotlin.uuid.ExperimentalUuidApi
 class SyncServer(
     private val db: Database,
     private val schema: Schema,
-    private val applier: MutatorApplier<*, *>,
+    private val applier: ServerActionProcessor,
 ) {
     val syncedTables: List<UserRestrictedJsonTable> = schema.syncedTables.map { UserRestrictedJsonTable(it) }
-    val views: List<View> = schema.views
+    val views: List<JsonView> = schema.views
 
     suspend fun sync(
         request: SyncRequest,
         identity: Identity,
     ): SyncResult {
-        // Apply mutations
+        // Apply actions
         db.write(identity = identity) {
-            applier.applyMutations(request)
+            applier.invokeActions(request)
             incrementServerFrame()
-            //TODO write to DB which mutation was last applied so it can be skipped in case of a retry
+            //TODO write to DB which action was last applied so it can be skipped in case of a retry
         }
 
         //TODO maybe get this back from applier for brevity
-        val lastApplied = request.firstMutatorId + request.encodedMutators.size
+        val lastApplied = request.firstActionId + request.encodedActions.size
 
         return db.read(identity = identity) {
             SyncResult(
-                lastMutatorIdApplied = lastApplied,
+                lastActionIdApplied = lastApplied,
                 changes = getUpdatedSince(request.lastFrameSeen),
                 serverFrame = getServerFrame(),
             )

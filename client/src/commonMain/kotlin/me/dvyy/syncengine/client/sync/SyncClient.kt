@@ -3,11 +3,10 @@ package me.dvyy.syncengine.client.sync
 import me.dvyy.sqlite.Database
 import me.dvyy.sqlite.Transaction
 import me.dvyy.sqlite.WriteTransaction
-import me.dvyy.syncengine.client.kvstore.KVStore
 import me.dvyy.syncengine.client.kvstore.KVStoreProperty
-import me.dvyy.syncengine.client.mutators.MutatorQueue
-import me.dvyy.syncengine.client.mutators.MutatorsTable
+import me.dvyy.syncengine.client.mutators.ActionQueue
 import me.dvyy.syncengine.client.mutators.RollbackJsonTable
+import me.dvyy.syncengine.client.schema.ClientDatabase
 import me.dvyy.syncengine.schema.Schema
 import me.dvyy.syncengine.sync.SyncRequest
 import me.dvyy.syncengine.sync.SyncResult
@@ -21,18 +20,18 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 class SyncClient(
     private val db: Database,
-    private val mutators: MutatorQueue<*, *>,
+    private val mutators: ActionQueue,
     private val schema: Schema,
     private val syncService: SyncService,
 ) {
+    private val clientDAO = ClientDatabase()
     val syncedTables = schema.syncedTables.map { RollbackJsonTable(it) }
     val views = schema.views
-    val lastFrameSeen = KVStoreProperty("lastFrameSeen", KVStore)
-    val deviceId = KVStoreProperty("deviceId", KVStore)
+    val lastFrameSeen = KVStoreProperty("lastFrameSeen")
+    val deviceId = KVStoreProperty("deviceId")
 
     suspend fun initialize() = db.write {
-        MutatorsTable.create()
-        KVStore.create()
+        clientDAO.create()
         syncedTables.forEach { it.create() }
         views.forEach { it.create() }
         deviceId.setString(Uuid.random().toHexString())
@@ -60,14 +59,14 @@ class SyncClient(
     internal fun getSyncRequest() = SyncRequest(
         deviceId = Uuid.parseHex(deviceId.getString()!!),
         lastFrameSeen = (lastFrameSeen.getString()?.toLong() ?: 0L),
-        encodedMutators = mutators.getAllEncoded(),
-        firstMutatorId = mutators.firstMutatorId(),
+        encodedActions = mutators.getAllEncoded(),
+        firstActionId = mutators.firstMutatorId(),
     )
 
     context(tx: WriteTransaction)
     internal fun reconcileDiff(updates: SyncResult) {
         rollbackAll()
-        mutators.clearAcknowledged(updates.lastMutatorIdApplied)
+        mutators.clearAcknowledged(updates.lastActionIdApplied)
         mutators.invokeAllStored()
     }
 }

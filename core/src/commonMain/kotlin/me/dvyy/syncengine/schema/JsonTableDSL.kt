@@ -1,21 +1,13 @@
 package me.dvyy.syncengine.schema
 
-import me.dvyy.sqlite.tables.Table
-import me.dvyy.sqlite.tables.View
+import me.dvyy.sqlite.WriteTransaction
+
 
 class ViewBuilder(
-    val from: Table,
-    val name: String
+    val from: JsonTable,
+    val name: String,
 ) {
     val columns = mutableListOf<Column>()
-
-    fun viewStatement(from: String) = """
-        SELECT
-        id,
-        ${columns.joinToString(",\n") { it.toStatement() }}
-        FROM $from
-        WHERE data != jsonb('null')
-    """.trimIndent()
 
     fun indexStatements() = columns.joinToString(";\n") {
         "CREATE INDEX ${name}_${it.name} ON $name(data ->> '$.${it.name}')"
@@ -37,7 +29,22 @@ class ViewBuilder(
         columns += Column(name, SqliteDataType.BLOB)
     }
 
-    fun build(): View = View(name, viewStatement(from.name), involves = setOf(from))
+    fun build() = JsonView(name, from, columns)
+}
+
+class JsonView(val name: String, val from: JsonTable, val columns: List<Column>) {
+    fun viewStatement(from: String) = """
+        SELECT
+        id,
+        ${columns.joinToString(",\n") { it.toStatement() }}
+        FROM $from
+        WHERE data != jsonb('null')
+    """.trimIndent()
+
+    context(tx: WriteTransaction)
+    fun create() {
+        tx.exec("CREATE VIEW IF NOT EXISTS $name AS ${viewStatement(from.name)}")
+    }
 }
 
 fun jsonTable(name: String): JsonTable {
@@ -48,13 +55,13 @@ fun view(
     name: String,
     table: JsonTable,
     block: ViewBuilder.() -> Unit,
-): View {
+): JsonView {
     return ViewBuilder(table, name).apply(block).build()
 }
 
 fun schema(
     shared: Set<JsonTable> = setOf(),
-    views: Set<View> = setOf(),
+    views: Set<JsonView> = setOf(),
 ): Schema {
     return Schema(shared.toList(), views.toList())
 }

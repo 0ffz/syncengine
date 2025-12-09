@@ -1,29 +1,23 @@
 package me.dvyy.syncengine.client.mutators
 
 import me.dvyy.sqlite.WriteTransaction
-import me.dvyy.sqlite.tables.Table
-import me.dvyy.sqlite.tables.TableReading
 import me.dvyy.syncengine.schema.JsonTable
 
 class RollbackJsonTable(
     from: JsonTable,
-) : Table(
-    """
-    CREATE TABLE IF NOT EXISTS ${from.name} (
-        id BLOB PRIMARY KEY,
-        data BLOB,
-        owner INTEGER NOT NULL,
-        original_data BLOB
-    ) STRICT;
-    """.trimIndent(),
-) {
-    override val name = from.name
-
-    override val involves: Set<TableReading> = setOf(from)
-
+) : JsonTable(from.name) {
     context(tx: WriteTransaction)
     override fun create() {
-        super.create()
+        tx.exec(
+            """
+            CREATE TABLE IF NOT EXISTS $name (
+                id BLOB PRIMARY KEY,
+                data BLOB,
+                owner INTEGER NOT NULL,
+                original_data BLOB
+            ) STRICT;
+            """.trimIndent(),
+        )
         createTriggers()
     }
 

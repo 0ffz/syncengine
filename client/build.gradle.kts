@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlinx.serialization)
     `maven-publish`
+    id("me.dvyy.sqlite.codegen")
 }
 
 kotlin {
@@ -27,5 +28,11 @@ kotlin {
     }
     sourceSets.commonMain.dependencies {
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:null")
+    }
+}
+
+sqliteKt {
+    register("client") {
+        packageName = "me.dvyy.syncengine.client.schema"
     }
 }

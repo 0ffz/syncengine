@@ -18,4 +18,8 @@ open class JsonTable(val name: String) {
             """.trimIndent()
         )
     }
+
+    override fun toString(): String {
+        return name
+    }
 }

@@ -1,18 +1,23 @@
-package me.dvyy.syncengine.schema
+package me.dvyy.syncengine.server.schema
 
 import me.dvyy.sqlite.WriteTransaction
+import me.dvyy.syncengine.schema.JsonTable
 
-class UserRestrictedJsonTable(from: JsonTable) : JsonTable(
-    """
-    CREATE TABLE IF NOT EXISTS ${from.name} (
-        id BLOB NOT NULL PRIMARY KEY,
-        data BLOB,
-        owner INTEGER NOT NULL,
-        frame INTEGER NOT NULL DEFAULT (strftime('%s','now') || substr(strftime('%f','now'),4))
-    ) STRICT;
-    """.trimIndent()
-) {
+class UserRestrictedJsonTable(from: JsonTable) : JsonTable(from.name) {
 
+    context(tx: WriteTransaction)
+    override fun create() {
+        tx.exec(
+            """
+            CREATE TABLE IF NOT EXISTS $name (
+                id BLOB NOT NULL PRIMARY KEY,
+                data BLOB,
+                owner INTEGER NOT NULL,
+                frame INTEGER NOT NULL DEFAULT (strftime('%s','now') || substr(strftime('%f','now'),4))
+            ) STRICT;
+            """.trimIndent()
+        )
+    }
 //    context(tx: WriteTransaction)
 //    fun createIndexes() {
 //        tx.exec("CREATE INDEX IF NOT EXISTS ${name}_owner ON $name(owner);")

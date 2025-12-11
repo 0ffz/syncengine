@@ -8,6 +8,7 @@ import me.dvyy.sqlite.WriteTransaction
 import me.dvyy.syncengine.actions.Action
 import me.dvyy.syncengine.actions.PolymorphicIntSerializer
 import me.dvyy.syncengine.reducers.Reducers
+import me.dvyy.syncengine.schema.Schema
 import me.dvyy.syncengine.sync.SyncRequest
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -18,10 +19,11 @@ import kotlin.uuid.ExperimentalUuidApi
 @OptIn(ExperimentalSerializationApi::class)
 class ServerActionProcessor(
     private val logger: Logger,
+    private val schema: Schema,
     private val reducers: Reducers,
 ) {
     private val protobuf = ProtoBuf { }
-    private val actionSerializer = PolymorphicIntSerializer.of(reducers)
+    private val actionSerializer = PolymorphicIntSerializer.of(schema)
     private val server = ServerQueries()
 
     @OptIn(ExperimentalUuidApi::class)

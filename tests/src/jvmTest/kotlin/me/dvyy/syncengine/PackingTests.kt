@@ -12,6 +12,7 @@ import kotlinx.serialization.protobuf.ProtoBuf
 import me.dvyy.sqlite.Database
 import me.dvyy.syncengine.actions.Action
 import me.dvyy.syncengine.actions.PolymorphicIntSerializer
+import me.dvyy.syncengine.reducers.ActionDefinition
 import me.dvyy.syncengine.schema.JsonElementAsStringSerializer
 import me.dvyy.syncengine.schema.UuidSerializer
 import kotlin.test.Test
@@ -50,7 +51,8 @@ class PackingTests {
             Json { serializersModule = SerializersModule { contextual(JsonElement::class, JsonElement.serializer()) } }
         val db = Database.inMemorySingleConnection()
         val action = TestAction("some text", byteArrayOf(0, 1, 2, 3, 4, 5, 6), Uuid.random(), jsonElement)
-        val actionSerializer = PolymorphicIntSerializer(mapOf(2 to (TestAction::class to TestAction.serializer())))
+        val actionSerializer =
+            PolymorphicIntSerializer(mapOf(2 to ActionDefinition(TestAction::class, TestAction.serializer())))
 
         val encodedProtobuf = protobuf.encodeToByteArray(actionSerializer, action)
         val encodedJson = json.encodeToString(actionSerializer, action)

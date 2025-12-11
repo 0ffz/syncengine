@@ -7,18 +7,17 @@ import me.dvyy.syncengine.jsonactions.actions.JsonPatchAction
 import me.dvyy.syncengine.reducers.MutableReducers
 
 fun MutableReducers.jsonReducers(
-    startId: Int,
     tables: List<JsonDataQueries<*>>,
 ) {
     val byTable: Map<String, JsonDataQueries<*>> = tables.associateBy { it.table.name }
     fun getTable(name: String) = byTable[name] ?: error("Table $name not found")
-    reduce<DeleteRowAction>(startId) {
+    reduce<DeleteRowAction> {
         getTable(it.table).delete(it.id)
     }
-    reduce<JsonCreateAction>(startId + 1) {
+    reduce<JsonCreateAction> {
         getTable(it.table).create(it.id, it.data)
     }
-    reduce<JsonPatchAction>(startId + 2) {
+    reduce<JsonPatchAction> {
         getTable(it.table).patch(it.id, it.patch.toString())
     }
 }

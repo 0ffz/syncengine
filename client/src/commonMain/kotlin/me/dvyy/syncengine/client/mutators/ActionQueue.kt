@@ -12,6 +12,7 @@ import me.dvyy.syncengine.actions.Actions
 import me.dvyy.syncengine.actions.PolymorphicIntSerializer
 import me.dvyy.syncengine.client.schema.ClientQueries
 import me.dvyy.syncengine.reducers.Reducers
+import me.dvyy.syncengine.schema.Schema
 
 /**
  * Mutators are operations ran in-order to modify a client's state.
@@ -23,11 +24,12 @@ import me.dvyy.syncengine.reducers.Reducers
 class ActionQueue(
     private val logger: Logger,
     private val db: Database,
+    private val schema: Schema,
     private val reducers: Reducers,
 ) : Actions {
     private val queries = ClientQueries()
     private val protobuf = ProtoBuf { }
-    private val actionSerializer = PolymorphicIntSerializer.of(reducers)
+    private val actionSerializer = PolymorphicIntSerializer.of(schema)
     private var previous: Action? = null
 
     override suspend fun invoke(action: Action) = db.write {

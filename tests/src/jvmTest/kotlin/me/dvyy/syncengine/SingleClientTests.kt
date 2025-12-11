@@ -7,10 +7,12 @@ import kotlinx.serialization.json.JsonElement
 import me.dvyy.sqlite.Database
 import me.dvyy.syncengine.client.sync.SyncClient
 import me.dvyy.syncengine.jsonactions.JsonDataQueries
+import me.dvyy.syncengine.jsonactions.actions.DeleteRowAction
 import me.dvyy.syncengine.jsonactions.actions.JsonCreateAction
 import me.dvyy.syncengine.jsonactions.actions.JsonPatchAction
 import me.dvyy.syncengine.jsonactions.reducers.jsonReducers
 import me.dvyy.syncengine.reducers.reducers
+import me.dvyy.syncengine.reducers.syncProtocol
 import me.dvyy.syncengine.schema.jsonTable
 import me.dvyy.syncengine.schema.schema
 import me.dvyy.syncengine.server.schema.SyncServer
@@ -23,10 +25,14 @@ class SingleClientTests {
     val clientDatabase = Database.temporary()
     val serverDatabase = Database.temporary()
     val tasksTable = jsonTable("tasks")
-    val schema = schema(shared = setOf(tasksTable))
+    val schema = schema(shared = setOf(tasksTable), protocol = syncProtocol {
+        action<JsonCreateAction>(1)
+        action<JsonPatchAction>(2)
+        action<DeleteRowAction>(3)
+    })
     val tasks = JsonDataQueries(Task.serializer(), tasksTable)
     val reducers = reducers {
-        jsonReducers(0, listOf(tasks))
+        jsonReducers(listOf(tasks))
     }
     val server = SyncServer.of(serverDatabase, reducers, schema)
     val mockService = server.mockAwaitingService(user = 0)

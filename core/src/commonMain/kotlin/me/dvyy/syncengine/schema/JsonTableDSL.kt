@@ -1,6 +1,7 @@
 package me.dvyy.syncengine.schema
 
 import me.dvyy.sqlite.WriteTransaction
+import me.dvyy.syncengine.reducers.SyncProtocol
 
 
 class ViewBuilder(
@@ -62,6 +63,7 @@ fun view(
 fun schema(
     shared: Set<JsonTable> = setOf(),
     views: Set<JsonView> = setOf(),
+    protocol: SyncProtocol,
 ): Schema {
-    return Schema(shared.toList(), views.toList())
+    return Schema(shared.toList(), views.toList(), protocol)
 }

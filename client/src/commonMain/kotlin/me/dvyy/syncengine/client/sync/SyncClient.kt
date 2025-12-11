@@ -115,6 +115,6 @@ class SyncClient(
             schema: Schema,
             syncService: SyncService,
             logger: Logger = Logger.withTag("Client"),
-        ) = SyncClient(logger, db, ActionQueue(logger, db, reducers), schema, syncService)
+        ) = SyncClient(logger, db, ActionQueue(logger, db, schema, reducers), schema, syncService)
     }
 }

@@ -92,6 +92,6 @@ class SyncServer(
             reducers: Reducers,
             schema: Schema,
             logger: Logger = Logger.withTag("Server"),
-        ) = SyncServer(logger, db, schema, ServerActionProcessor(logger, reducers))
+        ) = SyncServer(logger, db, schema, ServerActionProcessor(logger, schema, reducers))
     }
 }

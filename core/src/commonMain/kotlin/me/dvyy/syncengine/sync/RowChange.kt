@@ -13,4 +13,8 @@ data class TableChanges(
 data class RowChange(
     val row: Uuid,
     val data: ByteArray,
-)
+) {
+    override fun toString(): String {
+        return "RowChange(row=$row,data=${data.size} bytes)"
+    }
+}

@@ -1,5 +1,6 @@
 package me.dvyy.syncengine.server.schema
 
+import co.touchlab.kermit.Logger
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json
 import me.dvyy.sqlite.Transaction
@@ -14,6 +15,7 @@ import kotlin.uuid.ExperimentalUuidApi
  * handling cases where a client re-submits actions that were already applied
  */
 class ServerActionProcessor(
+    private val logger: Logger,
     private val reducers: Reducers,
 ) {
     private val actionSerializer = PolymorphicSerializer(Action::class)
@@ -42,6 +44,7 @@ class ServerActionProcessor(
             .let { if (it > actions.lastIndex) 0 else it }
         for (index in startIndex..actions.lastIndex) {
             val action = decodeAction(actions[index])
+            logger.v { "Applying action: $action" }
             reducers.actions[action::class]?.invoke(tx, action)
         }
 

@@ -9,5 +9,9 @@ data class SyncRequest(
     val lastFrameSeen: Long,
     val encodedActions: List<ByteArray>,
     val firstActionId: Long,
-)
+) {
+    override fun toString(): String {
+        return "SyncRequest(deviceId=$deviceId, lastFrameSeen=$lastFrameSeen, encodedActions=${encodedActions.size}, firstActionId=$firstActionId)"
+    }
+}
 

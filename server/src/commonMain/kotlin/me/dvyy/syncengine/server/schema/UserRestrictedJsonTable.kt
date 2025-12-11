@@ -13,8 +13,29 @@ class UserRestrictedJsonTable(from: JsonTable) : JsonTable(from.name) {
                 id BLOB NOT NULL PRIMARY KEY,
                 data BLOB,
                 owner INTEGER NOT NULL,
-                frame INTEGER NOT NULL DEFAULT (strftime('%s','now') || substr(strftime('%f','now'),4))
+                frame INTEGER
             ) STRICT;
+            """.trimIndent()
+        )
+        // Create update trigger that sets frame to current time
+        tx.exec(
+            """
+                CREATE TRIGGER IF NOT EXISTS ${name}_frame_update 
+                AFTER UPDATE ON $name 
+                FOR EACH ROW 
+                BEGIN
+                    UPDATE $name SET frame = (SELECT value FROM syncengine_store WHERE key = 'frame') WHERE id = new.id;
+                END;
+            """.trimIndent()
+        )
+        tx.exec(
+            """
+                CREATE TRIGGER IF NOT EXISTS ${name}_frame_insert 
+                AFTER INSERT ON $name 
+                FOR EACH ROW 
+                BEGIN
+                    UPDATE $name SET frame = (SELECT value FROM syncengine_store WHERE key = 'frame') WHERE id = new.id;
+                END;
             """.trimIndent()
         )
     }

@@ -1,6 +1,7 @@
 package me.dvyy.syncengine.client.mutators
 
 import androidx.sqlite.SQLiteStatement
+import co.touchlab.kermit.Logger
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json
 import me.dvyy.sqlite.Database
@@ -18,6 +19,7 @@ import me.dvyy.syncengine.reducers.Reducers
  * when they are read and sent off to the server to apply, being cleared once the server confirms a sync request
  */
 class ActionQueue(
+    private val logger: Logger,
     private val db: Database,
     private val reducers: Reducers,
 ) : Actions {
@@ -29,12 +31,13 @@ class ActionQueue(
     private var previous: Action? = null
 
     override suspend fun invoke(action: Action) = db.write {
-        mutate(action) //TODO merge with last if possible
+        applyReducersFor(action) //TODO merge with last if possible
         append(action)
     }
 
     context(tx: WriteTransaction)
-    private fun mutate(action: Action) {
+    private fun applyReducersFor(action: Action) {
+        logger.v { "Applying action: $action" }
         reducers.actions[action::class]?.invoke(tx, action)
     }
 
@@ -49,20 +52,27 @@ class ActionQueue(
     }
 
     context(tx: WriteTransaction)
-    fun invokeAllStored() = forEachMutator { mutate(it) }
+    fun invokeAllStored() = forEachMutator { applyReducersFor(it) }
 
     context(tx: WriteTransaction)
     fun append(action: Action) {
         val reduced = previous?.let { action.reduce(it) }
         if (reduced != null) {
-            // replace last mutator with reduced
+            logger.v { "Appending reduced action: $reduced" }
+//            // replace last action with reduced
             queries.actions.updateLastAction(json.encodeToString(actionSerializer, action))
             previous = reduced
         } else {
-            // add as new mutator
+            logger.v { "Appending new action: $action" }
+            // add as new action
             queries.actions.append(json.encodeToString(actionSerializer, action))
             previous = action
         }
+    }
+
+    context(tx: WriteTransaction)
+    fun preventPreviousReducing() {
+        previous = null
     }
 
     context(tx: Transaction)

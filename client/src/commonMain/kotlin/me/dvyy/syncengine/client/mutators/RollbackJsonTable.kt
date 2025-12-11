@@ -26,6 +26,10 @@ class RollbackJsonTable(
         tx.exec(
             """
             DELETE FROM $name WHERE original_data = jsonb('null');
+            """.trimIndent()
+        )
+        tx.exec(
+            """
             UPDATE $name SET
                 data = original_data,
                 original_data = NULL
@@ -45,7 +49,7 @@ class RollbackJsonTable(
                 BEFORE DELETE
                 ON $name
                 FOR EACH ROW
-                WHEN old.original_data IS NOT jsonb('null')
+                WHEN old.original_data != jsonb('null')
             BEGIN
                 UPDATE $name SET data = jsonb('null') WHERE id = old.id;
                 SELECT raise(ignore);

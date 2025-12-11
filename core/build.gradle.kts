@@ -5,32 +5,19 @@ plugins {
 }
 
 kotlin {
-    compilerOptions {
-        freeCompilerArgs.add("-Xcontext-parameters")
-    }
     jvm()
 
     sourceSets {
         commonMain {
             dependencies {
                 dependencies {
-                    api("me.dvyy:sqlite-kt:0.0.2-alpha.6")
-                    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
-                    implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.8.1")
-                    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-//                    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.8.1")
-//                    implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.8.1")
+                    api(libs.sqlite.kt)
+                    implementation(libs.kotlinx.serialization.json)
+                    implementation(libs.kotlinx.serialization.cbor)
+                    implementation(libs.kotlinx.coroutines.core)
+                    implementation(libs.kermit)
                 }
             }
         }
-    }
-    sourceSets.commonMain.dependencies {
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:null")
-    }
-}
-
-kotlin {
-    compilerOptions {
-        optIn.add("kotlin.uuid.ExperimentalUuidApi")
     }
 }

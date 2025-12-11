@@ -4,6 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import me.dvyy.syncengine.actions.Action
+import me.dvyy.syncengine.schema.JsonElementAsStringSerializer
 import kotlin.uuid.Uuid
 
 @Serializable
@@ -11,5 +12,5 @@ import kotlin.uuid.Uuid
 data class JsonCreateAction(
     val table: String,
     val id: Uuid,
-    val data: JsonElement,
+    val data: @Serializable(with = JsonElementAsStringSerializer::class) JsonElement,
 ) : Action

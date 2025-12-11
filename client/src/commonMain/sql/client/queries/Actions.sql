@@ -1,11 +1,11 @@
--- fun updateLastAction(json: String)
+-- fun updateLastAction(bytes: ByteArray)
 UPDATE actions_list
-SET data = jsonb(:json)
+SET data = :bytes
 WHERE id = ( SELECT max(id) FROM actions_list );
 
--- fun append(json: String)
+-- fun append(bytes: ByteArray)
 INSERT INTO actions_list(data)
-VALUES (jsonb(:json));
+VALUES (:bytes);
 
 -- getAll
 SELECT data

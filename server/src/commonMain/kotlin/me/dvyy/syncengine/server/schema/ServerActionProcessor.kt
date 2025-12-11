@@ -1,11 +1,12 @@
 package me.dvyy.syncengine.server.schema
 
 import co.touchlab.kermit.Logger
-import kotlinx.serialization.PolymorphicSerializer
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.protobuf.ProtoBuf
 import me.dvyy.sqlite.Transaction
 import me.dvyy.sqlite.WriteTransaction
 import me.dvyy.syncengine.actions.Action
+import me.dvyy.syncengine.actions.PolymorphicIntSerializer
 import me.dvyy.syncengine.reducers.Reducers
 import me.dvyy.syncengine.sync.SyncRequest
 import kotlin.uuid.ExperimentalUuidApi
@@ -14,12 +15,13 @@ import kotlin.uuid.ExperimentalUuidApi
  * Invokes actions from clients to the server's database,
  * handling cases where a client re-submits actions that were already applied
  */
+@OptIn(ExperimentalSerializationApi::class)
 class ServerActionProcessor(
     private val logger: Logger,
     private val reducers: Reducers,
 ) {
-    private val actionSerializer = PolymorphicSerializer(Action::class)
-    private val json = Json { serializersModule = reducers.serializersModule }
+    private val protobuf = ProtoBuf { }
+    private val actionSerializer = PolymorphicIntSerializer.of(reducers)
     private val server = ServerQueries()
 
     @OptIn(ExperimentalUuidApi::class)
@@ -45,7 +47,7 @@ class ServerActionProcessor(
         for (index in startIndex..actions.lastIndex) {
             val action = decodeAction(actions[index])
             logger.v { "Applying action: $action" }
-            reducers.actions[action::class]?.invoke(tx, action)
+            reducers.actionsToReducers[action::class]?.invoke(tx, action)
         }
 
         //TODO ensure clienttable populated before this
@@ -57,7 +59,7 @@ class ServerActionProcessor(
     context(tx: Transaction)
     fun decodeAction(byteArray: ByteArray): Action {
         return tx
-            .select("SELECT json(?)", byteArray)
-            .first { json.decodeFromString(actionSerializer, getText(0)) }
+            .select("SELECT ?", byteArray)
+            .first { protobuf.decodeFromByteArray(actionSerializer, getBlob(0)) }
     }
 }

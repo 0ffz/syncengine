@@ -48,12 +48,17 @@ object JsonElementAsStringSerializer : KSerializer<JsonElement> {
     }
 }
 
-//object JsonElementAsCborSerializer : KSerializer<JsonElement> {
-//    override val descriptor: SerialDescriptor = ByteArraySerializer().descriptor
-//    override fun deserialize(decoder: Decoder): JsonElement {
-//        Cbor.encodeToByteArray()
-//    }
-//    override fun serialize(encoder: Encoder, value: JsonElement) {
-//        TODO("Not yet implemented")
-//    }
-//}
+object JsonElementAsCborSerializer : KSerializer<JsonElement> {
+    override val descriptor: SerialDescriptor = ByteArraySerializer().descriptor
+    override fun deserialize(decoder: Decoder): JsonElement {
+        Cbor
+        return Cbor.decodeFromByteArray(
+            JsonElement.serializer(),
+            decoder.decodeSerializableValue(ByteArraySerializer())
+        )
+    }
+
+    override fun serialize(encoder: Encoder, value: JsonElement) {
+        encoder.encodeSerializableValue(ByteArraySerializer(), Cbor.encodeToByteArray(value))
+    }
+}

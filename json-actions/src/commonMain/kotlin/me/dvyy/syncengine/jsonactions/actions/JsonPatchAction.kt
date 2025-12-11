@@ -4,6 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import me.dvyy.syncengine.actions.Action
+import me.dvyy.syncengine.schema.JsonElementAsStringSerializer
 import me.dvyy.syncengine.schema.plus
 import kotlin.uuid.Uuid
 
@@ -12,7 +13,7 @@ import kotlin.uuid.Uuid
 data class JsonPatchAction(
     val table: String,
     val id: Uuid,
-    val patch: JsonElement,
+    val patch: @Serializable(with = JsonElementAsStringSerializer::class) JsonElement,
 ) : Action {
     override fun reduce(previous: Action): Action? {
         return when (previous) {

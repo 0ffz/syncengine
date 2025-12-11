@@ -2,13 +2,14 @@ package me.dvyy.syncengine.client.mutators
 
 import androidx.sqlite.SQLiteStatement
 import co.touchlab.kermit.Logger
-import kotlinx.serialization.PolymorphicSerializer
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.protobuf.ProtoBuf
 import me.dvyy.sqlite.Database
 import me.dvyy.sqlite.Transaction
 import me.dvyy.sqlite.WriteTransaction
 import me.dvyy.syncengine.actions.Action
 import me.dvyy.syncengine.actions.Actions
+import me.dvyy.syncengine.actions.PolymorphicIntSerializer
 import me.dvyy.syncengine.client.schema.ClientQueries
 import me.dvyy.syncengine.reducers.Reducers
 
@@ -18,16 +19,15 @@ import me.dvyy.syncengine.reducers.Reducers
  * These are stored locally in a table via this MutatorQueue until a sync occurs,
  * when they are read and sent off to the server to apply, being cleared once the server confirms a sync request
  */
+@OptIn(ExperimentalSerializationApi::class)
 class ActionQueue(
     private val logger: Logger,
     private val db: Database,
     private val reducers: Reducers,
 ) : Actions {
     private val queries = ClientQueries()
-    private val json = Json {
-        serializersModule = reducers.serializersModule
-    }
-    private val actionSerializer = PolymorphicSerializer(Action::class)
+    private val protobuf = ProtoBuf { }
+    private val actionSerializer = PolymorphicIntSerializer.of(reducers)
     private var previous: Action? = null
 
     override suspend fun invoke(action: Action) = db.write {
@@ -38,14 +38,14 @@ class ActionQueue(
     context(tx: WriteTransaction)
     private fun applyReducersFor(action: Action) {
         logger.v { "Applying action: $action" }
-        reducers.actions[action::class]?.invoke(tx, action)
+        reducers.actionsToReducers[action::class]?.invoke(tx, action)
     }
 
-    fun SQLiteStatement.getMutator(index: Int) = json.decodeFromString(actionSerializer, getText(index))
+    fun SQLiteStatement.getMutator(index: Int) = protobuf.decodeFromByteArray(actionSerializer, getBlob(index))
 
     context(tx: Transaction)
     inline fun forEachMutator(run: (Action) -> Unit) {
-        tx.forEach("SELECT json(data) FROM actions_list") {
+        tx.forEach("SELECT data FROM actions_list") {
 //            run(protobuf.decodeFromByteArray(mutatorSerializer, getBlob(0)))
             run(getMutator(0))
         }
@@ -60,12 +60,12 @@ class ActionQueue(
         if (reduced != null) {
             logger.v { "Appending reduced action: $reduced" }
 //            // replace last action with reduced
-            queries.actions.updateLastAction(json.encodeToString(actionSerializer, action))
+            queries.actions.updateLastAction(protobuf.encodeToByteArray(actionSerializer, action))
             previous = reduced
         } else {
             logger.v { "Appending new action: $action" }
             // add as new action
-            queries.actions.append(json.encodeToString(actionSerializer, action))
+            queries.actions.append(protobuf.encodeToByteArray(actionSerializer, action))
             previous = action
         }
     }

@@ -17,10 +17,10 @@ kotlin {
                     implementation(projects.jsonActions)
                     implementation(libs.kotlinx.serialization.json)
                     implementation(libs.kotlinx.serialization.cbor)
+                    implementation(libs.kotlinx.serialization.protobuf)
                     implementation(libs.kotlinx.coroutines.test)
                     implementation(libs.kermit)
-//                    implementation(libs.kotest.assertions)
-//                    implementation(libs.kotest.property)
+                    implementation(libs.kotest.assertions)
                     implementation(libs.kotlinx.coroutines.test)
                     implementation(kotlin("test"))
                 }

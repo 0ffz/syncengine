@@ -26,7 +26,7 @@ class SingleClientTests {
     val schema = schema(shared = setOf(tasksTable))
     val tasks = JsonDataQueries(Task.serializer(), tasksTable)
     val reducers = reducers {
-        jsonReducers(listOf(tasks))
+        jsonReducers(0, listOf(tasks))
     }
     val server = SyncServer.of(serverDatabase, reducers, schema)
     val mockService = server.mockAwaitingService(user = 0)

@@ -55,7 +55,11 @@ class ServerActionProcessor(
         //TODO ensure clienttable populated before this
 
         // Write last action applied for this client
-        server.clients.setLastActionApplied(lastAppliedAfterTransaction, uuid = request.deviceId, owner = tx.identity)
+        server.clients.setLastActionApplied(
+            lastMutatorApplied = lastAppliedAfterTransaction,
+            uuid = request.deviceId,
+            owner = tx.identity
+        )
     }
 
     context(tx: Transaction)

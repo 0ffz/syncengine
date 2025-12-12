@@ -3,6 +3,9 @@
 package me.dvyy.syncengine.server.schema
 
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import me.dvyy.sqlite.Database
 import me.dvyy.sqlite.Identity
 import me.dvyy.sqlite.Transaction
@@ -17,6 +20,7 @@ import me.dvyy.syncengine.sync.SyncResult
 import me.dvyy.syncengine.sync.TableChanges
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class SyncServer(
     private val logger: Logger,
@@ -26,6 +30,35 @@ class SyncServer(
 ) {
     val syncedTables: List<UserRestrictedJsonTable> = schema.syncedTables.map { UserRestrictedJsonTable(it) }
     val views: List<JsonView> = schema.views
+    private val _updates = MutableSharedFlow<Unit>(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    ).apply { tryEmit(Unit) }
+    val updates = _updates.asSharedFlow()
+    val dao = ServerQueries()
+
+    suspend fun getLastActionApplied(uuid: Uuid, identity: Identity): Long = db.read {
+        dao.clients.getLastActionApplied(uuid, identity)
+            .firstOrNull { getLong(it.last_action_applied) }
+            ?: -1
+    }
+
+    suspend fun getUpdates(
+        uuid: Uuid,
+        identity: Identity,
+        lastFrameSeen: Long,
+    ): SyncResult {
+        return db.write(identity = identity) {
+            val lastApplied =
+                dao.clients.getLastActionApplied(uuid, identity).firstOrNull { getLong(it.last_action_applied) }
+                    ?: -1
+            SyncResult(
+                lastActionIdApplied = lastApplied,
+                changes = getUpdatedSince(lastFrameSeen),
+                serverFrame = getServerFrame(),
+            )
+        }
+    }
 
     suspend fun sync(
         request: SyncRequest,
@@ -39,16 +72,18 @@ class SyncServer(
                 //TODO write to DB which action was last applied so it can be skipped in case of a retry
             }
             logger.v { "Applied ${request.encodedActions.size} actions from ${request.deviceId}" }
+            _updates.emit(Unit)
         }
 
         //TODO maybe get this back from applier for brevity
         val lastApplied = request.firstActionId + request.encodedActions.lastIndex
 
         return db.read(identity = identity) {
+            val serverFrame = getServerFrame()
             SyncResult(
                 lastActionIdApplied = lastApplied,
                 changes = getUpdatedSince(request.lastFrameSeen),
-                serverFrame = getServerFrame(),
+                serverFrame = serverFrame,
             )
         }
     }
@@ -64,13 +99,24 @@ class SyncServer(
     internal fun getUpdatedSince(frame: Long): List<TableChanges> = schema.syncedTables.map { table ->
         TableChanges(
             table = table.name,
-            changes = tx.select("SELECT id, data FROM $table WHERE frame > ? AND owner = ?", frame, tx.identity)
+            changes = tx.select(
+                "SELECT id, data FROM $table WHERE frame > ? AND owner = ? AND data IS NOT null",
+                frame,
+                tx.identity
+            )
                 .map {
                     RowChange(
                         row = getUuid(0),
                         data = getBlob(1),
                     )
-                }
+                },
+            deletions = tx.select(
+                "SELECT id, data FROM $table WHERE frame > ? AND owner = ? AND data IS null",
+                frame,
+                tx.identity
+            ).map {
+                getUuid(0)
+            }
         )
     }
 

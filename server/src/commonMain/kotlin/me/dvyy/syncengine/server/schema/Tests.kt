@@ -1,26 +1,32 @@
 package me.dvyy.syncengine.server.schema
 
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.launch
 import me.dvyy.sqlite.Identity
 import me.dvyy.syncengine.sync.SyncRequest
 import me.dvyy.syncengine.sync.SyncResult
 import me.dvyy.syncengine.sync.SyncService
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.uuid.Uuid
 
 
 class MockAwaitingSyncService(val server: SyncServer, val user: Identity) : SyncService {
     private val requestStart = Channel<Unit>(Channel.RENDEZVOUS)
     private val requestReturn = Channel<Unit>(Channel.RENDEZVOUS)
 
-    override suspend fun sync(request: SyncRequest): SyncResult {
-        // Wait for signal before proceeding
-        requestStart.receive()
-        val result = server.sync(request, user)
-        requestReturn.receive()
-        return result
+    override suspend fun sync(uuid: Uuid, initialRequest: SyncRequest, request: Flow<SyncRequest>): Flow<SyncResult> {
+        TODO("Not yet implemented")
     }
+//    override suspend fun sync(request: SyncRequest): SyncResult {
+//        // Wait for signal before proceeding
+//        requestStart.receive()
+//        val result = server.sync(request, user)
+//        requestReturn.receive()
+//        return result
+//    }
 
     suspend fun sendRequest() {
         requestStart.send(Unit)
@@ -33,10 +39,38 @@ class MockAwaitingSyncService(val server: SyncServer, val user: Identity) : Sync
 
 fun SyncServer.mockAwaitingService(user: Identity) = MockAwaitingSyncService(this, user)
 
-fun SyncServer.mockService(user: Identity, delay: Duration = 0.seconds) = object : SyncService {
-    override suspend fun sync(request: SyncRequest): SyncResult {
-        delay(delay)
-        return sync(request, user)
+fun SyncServer.mockService(
+    user: Identity,
+    delay: Duration = 0.seconds,
+) = object : SyncService {
+    override suspend fun sync(
+        uuid: Uuid,
+        initialRequest: SyncRequest,
+        request: Flow<SyncRequest>,
+    ): Flow<SyncResult> {
+        return channelFlow {
+            val initialResult = sync(initialRequest, user)
+            send(initialResult)
+            var lastFrameSent = initialResult.serverFrame
+
+            // Listen to incoming requests
+            launch {
+                request.collect {
+                    if (it.encodedActions.isNotEmpty()) sync(it, user)
+                }
+            }
+
+            // Respond back with all server updates (including from other clients)
+            this@mockService.updates.collect {
+                val result = getUpdates(uuid, user, lastFrameSent)
+                lastFrameSent = result.serverFrame
+                if (result.changes.isNotEmpty()) send(result)
+            }
+        }
     }
+//    override suspend fun sync(request: SyncRequest): SyncResult {
+//        delay(delay)
+//        return sync(request, user)
+//    }
 }
 

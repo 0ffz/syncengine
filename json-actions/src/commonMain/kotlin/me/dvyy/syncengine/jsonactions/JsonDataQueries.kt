@@ -26,7 +26,7 @@ class JsonDataQueries<T>(
     context(tx: Transaction)
     fun get(
         id: Uuid,
-    ): T? = tx.getOrNull("SELECT json(data) FROM $table WHERE id = ?", id) {
+    ): T? = tx.getOrNull("SELECT json(data) FROM $table WHERE id = ? AND data IS NOT null", id) {
         json.decodeFromString(serializer, getText(0))
     }
 
@@ -35,12 +35,12 @@ class JsonDataQueries<T>(
         id: Uuid,
         jsonPath: String,
         statement: NamedColumnSqliteStatement.() -> T,
-    ): T? = tx.getOrNull("SELECT json(data) FROM $table WHERE id = ?", id) {
+    ): T? = tx.getOrNull("SELECT json(data) FROM $table WHERE id = ? AND data IS NOT null", id) {
         statement()
     }
 
     context(tx: Transaction)
-    fun getJsonElement(id: Uuid) = tx.getSingle("SELECT json(data) FROM $table WHERE id = ?", id) {
+    fun getJsonElement(id: Uuid) = tx.getSingle("SELECT json(data) FROM $table WHERE id = ? AND data IS NOT null", id) {
         json.parseToJsonElement(getText(0))
     }
 
@@ -60,7 +60,7 @@ class JsonDataQueries<T>(
 
     context(tx: WriteTransaction)
     fun delete(id: Uuid) {
-        tx.exec("DELETE FROM $table WHERE id = ? AND owner = ?", id, tx.identity)
+        tx.exec("UPDATE $table SET data = null WHERE id = ? AND owner = ?", id, tx.identity)
     }
 
     context(tx: WriteTransaction)

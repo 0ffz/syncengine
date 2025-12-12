@@ -78,7 +78,7 @@ class ActionQueue(
     }
 
     context(tx: Transaction)
-    fun getAllEncoded(): List<ByteArray> = queries.actions.getAll().map { getBlob(0) }
+    fun getAllEncodedAfter(afterId: Long): List<ByteArray> = queries.actions.getAllAfterId(afterId).map { getBlob(0) }
 
     context(tx: Transaction)
     fun firstMutatorId(): Long = queries.actions.firstActionId().firstOrNull { getLong(0) } ?: -1

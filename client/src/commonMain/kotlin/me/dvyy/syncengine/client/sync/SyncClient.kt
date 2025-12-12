@@ -1,6 +1,10 @@
 package me.dvyy.syncengine.client.sync
 
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import me.dvyy.sqlite.Database
 import me.dvyy.sqlite.Transaction
 import me.dvyy.sqlite.WriteTransaction
@@ -16,6 +20,7 @@ import me.dvyy.syncengine.sync.SyncRequest
 import me.dvyy.syncengine.sync.SyncResult
 import me.dvyy.syncengine.sync.SyncService
 import me.dvyy.syncengine.sync.TableChanges
+import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -33,7 +38,8 @@ class SyncClient(
     val syncedTables = schema.syncedTables.map { RollbackJsonTable(it) }
     val views = schema.views
     val lastFrameSeen = KVStoreProperty("lastFrameSeen")
-    val deviceId = KVStoreProperty("deviceId")
+    private val _deviceId = KVStoreProperty("deviceId")
+    lateinit var deviceId: Uuid
     val changesMade = db.watch("actions_list") {}
 
     suspend operator fun invoke(action: Action) = actionQueue.invoke(action)
@@ -42,22 +48,57 @@ class SyncClient(
         clientDAO.create()
         syncedTables.forEach { it.create() }
         views.forEach { it.create() }
-        deviceId.setString(Uuid.random().toHexString())
+        _deviceId.getString() ?: _deviceId.setString(Uuid.random().toHexString())
+        deviceId = Uuid.parseHex(_deviceId.getString()!!)
+    }
+
+    suspend fun establishSync() {
+        var lastActionIdSent = -1L
+        syncService.sync(
+            deviceId,
+            run {
+                db.write {
+                    actionQueue.preventPreviousReducing()
+                }
+                val request: SyncRequest = db.read {
+                    getSyncRequest(lastActionIdSent)
+                }
+                lastActionIdSent = request.lastActionId
+                request
+            },
+            db.watch("actions_list") { println("Detected action changes!") }.debounce(0.1.seconds).map {
+                try {
+                    db.write {
+                        actionQueue.preventPreviousReducing()
+                    }
+                    val request: SyncRequest = db.read {
+                        getSyncRequest(lastActionIdSent)
+                    }
+                    lastActionIdSent = request.lastActionId
+                    request
+                } catch (e: Error) {
+                    logger.e(e) { "Failed to sync" }
+                    throw e
+                }
+            }.filter { it.encodedActions.isNotEmpty() }.onEach {
+                logger.v { "Syncing $it..." }
+            }
+        ).collect { updates ->
+            try {
+                logger.v { "Received sync response: $updates" }
+                db.write {
+                    reconcileDiff(updates)
+                }
+                logger.v { "Reconciled!" }
+            } catch (e: Exception) {
+                logger.e(e) { "Failed to sync!" }
+            }
+        }
     }
 
     suspend fun sync() {
-        db.write {
-            actionQueue.preventPreviousReducing()
-        }
-        val request: SyncRequest = db.read {
-            getSyncRequest()
-        }
-        logger.v { "Syncing $request..." }
-        val updates = syncService.sync(request)
-        logger.v { "Received sync response: $updates" }
-        db.write {
-            reconcileDiff(updates)
-        }
+        TODO()
+//        val updates = syncService.sync(request)
     }
 
     context(tx: WriteTransaction)
@@ -68,12 +109,15 @@ class SyncClient(
 
     @OptIn(ExperimentalUuidApi::class)
     context(tx: Transaction)
-    internal fun getSyncRequest() = SyncRequest(
-        deviceId = Uuid.parseHex(deviceId.getString()!!),
-        lastFrameSeen = (lastFrameSeen.getString()?.toLong() ?: 0L),
-        encodedActions = actionQueue.getAllEncoded(),
-        firstActionId = actionQueue.firstMutatorId(),
-    )
+    internal fun getSyncRequest(afterId: Long): SyncRequest {
+        val start = if (afterId == -1L) actionQueue.firstMutatorId() else afterId + 1
+        return SyncRequest(
+            deviceId = Uuid.parseHex(_deviceId.getString()!!),
+            lastFrameSeen = (lastFrameSeen.getString()?.toLong() ?: 0L),
+            encodedActions = actionQueue.getAllEncodedAfter(start - 1),
+            firstActionId = start,
+        )
+    }
 
     context(tx: WriteTransaction)
     internal fun applyTableChanges(changes: TableChanges) {
@@ -93,6 +137,14 @@ class SyncClient(
                     update.step()
                     update.reset()
                 }
+            }
+        }
+        tx.prepare("DELETE FROM $table WHERE id = :id") {
+            changes.deletions.forEach { deleted ->
+                logger.v { "Deleting $deleted" }
+                bindUuid(1, deleted)
+                step()
+                reset()
             }
         }
     }

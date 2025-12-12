@@ -7,6 +7,7 @@ import kotlin.uuid.Uuid
 data class TableChanges(
     val table: String,
     val changes: List<RowChange>,
+    val deletions: List<Uuid>,
 )
 
 @Serializable

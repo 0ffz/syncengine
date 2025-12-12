@@ -2,7 +2,8 @@ CREATE TABLE clients
 (
     uuid  BLOB PRIMARY KEY,
     owner INTEGER NOT NULL,
-    last_action_applied INTEGER
+    last_action_applied INTEGER,
+    last_frame_seen     INTEGER
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS syncengine_store

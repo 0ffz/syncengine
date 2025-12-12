@@ -5,7 +5,12 @@ WHERE uuid = :uuid
   AND owner = :owner;
 
 -- fun setLastActionApplied(uuid: kotlin.uuid.Uuid, lastMutatorApplied: Long, owner: Long)
-UPDATE clients
-SET last_action_applied = :lastMutatorApplied
-WHERE uuid = :uuid
-  AND owner = :owner;
+INSERT OR
+REPLACE INTO clients (uuid, owner, last_action_applied)
+VALUES (:uuid, :owner, :lastMutatorApplied);
+
+-- fun setLastFrameSeen(uuid: kotlin.uuid.Uuid, lastFrameSeen: Long, owner: Long)
+-- UPDATE clients
+-- SET last_frame_seen = :lastFrameSeen
+-- WHERE uuid = :uuid
+--   AND owner = :owner;

@@ -7,9 +7,11 @@ WHERE id = ( SELECT max(id) FROM actions_list );
 INSERT INTO actions_list(data)
 VALUES (:bytes);
 
--- getAll
+-- fun getAllAfterId(id: Long)
 SELECT data
-FROM actions_list;
+FROM actions_list
+WHERE id > :id
+ORDER BY id;
 
 -- fun clearAcknowledged(id: Long)
 DELETE

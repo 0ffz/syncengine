@@ -2,8 +2,6 @@ package me.dvyy.syncengine.server.schema
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.launch
 import me.dvyy.sqlite.Identity
 import me.dvyy.syncengine.sync.SyncRequest
 import me.dvyy.syncengine.sync.SyncResult
@@ -47,27 +45,7 @@ fun SyncServer.mockService(
         uuid: Uuid,
         initialRequest: SyncRequest,
         request: Flow<SyncRequest>,
-    ): Flow<SyncResult> {
-        return channelFlow {
-            val initialResult = sync(initialRequest, user)
-            send(initialResult)
-            var lastFrameSent = initialResult.serverFrame
-
-            // Listen to incoming requests
-            launch {
-                request.collect {
-                    if (it.encodedActions.isNotEmpty()) sync(it, user)
-                }
-            }
-
-            // Respond back with all server updates (including from other clients)
-            this@mockService.updates.collect {
-                val result = getUpdates(uuid, user, lastFrameSent)
-                lastFrameSent = result.serverFrame
-                if (result.changes.isNotEmpty()) send(result)
-            }
-        }
-    }
+    ): Flow<SyncResult> = streamingSync(user, initialRequest, request)
 //    override suspend fun sync(request: SyncRequest): SyncResult {
 //        delay(delay)
 //        return sync(request, user)

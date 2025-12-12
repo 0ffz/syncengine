@@ -1,4 +1,4 @@
-CREATE TABLE clients
+CREATE TABLE IF NOT EXISTS clients
 (
     uuid  BLOB PRIMARY KEY,
     owner INTEGER NOT NULL,

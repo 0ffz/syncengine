@@ -4,8 +4,11 @@ package me.dvyy.syncengine.server.schema
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.launch
 import me.dvyy.sqlite.Database
 import me.dvyy.sqlite.Identity
 import me.dvyy.sqlite.Transaction
@@ -57,6 +60,30 @@ class SyncServer(
                 changes = getUpdatedSince(lastFrameSeen),
                 serverFrame = getServerFrame(),
             )
+        }
+    }
+
+    fun streamingSync(
+        user: Identity,
+        initialRequest: SyncRequest,
+        request: Flow<SyncRequest>,
+    ): Flow<SyncResult> = channelFlow {
+        val initialResult = sync(initialRequest, user)
+        send(initialResult)
+        var lastFrameSent = initialResult.serverFrame
+
+        // Listen to incoming requests
+        launch {
+            request.collect {
+                if (it.encodedActions.isNotEmpty()) sync(it, user)
+            }
+        }
+
+        // Respond back with all server updates (including from other clients)
+        updates.collect {
+            val result = getUpdates(initialRequest.deviceId, user, lastFrameSent)
+            lastFrameSent = result.serverFrame
+            if (result.changes.isNotEmpty()) send(result)
         }
     }
 

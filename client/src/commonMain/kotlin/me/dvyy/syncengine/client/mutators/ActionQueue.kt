@@ -32,9 +32,11 @@ class ActionQueue(
     private val actionSerializer = PolymorphicIntSerializer.of(schema)
     private var previous: Action? = null
 
-    override suspend fun invoke(action: Action) = db.write {
-        applyReducersFor(action) //TODO merge with last if possible
-        append(action)
+    override suspend fun invoke(action: Action) {
+        db.write {
+            applyReducersFor(action) //TODO merge with last if possible
+            append(action)
+        }
     }
 
     context(tx: WriteTransaction)
@@ -59,6 +61,7 @@ class ActionQueue(
     context(tx: WriteTransaction)
     fun append(action: Action) {
         val reduced = previous?.let { action.reduce(it) }
+        logger.v { "Previous action was $previous reduced $reduced" }
         if (reduced != null) {
             logger.v { "Appending reduced action: $reduced" }
 //            // replace last action with reduced

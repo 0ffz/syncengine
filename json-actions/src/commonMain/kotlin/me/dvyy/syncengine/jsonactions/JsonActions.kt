@@ -1,5 +1,7 @@
 package me.dvyy.syncengine.jsonactions
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import me.dvyy.sqlite.Database
 import me.dvyy.syncengine.actions.Actions
 import me.dvyy.syncengine.jsonactions.actions.DeleteRowAction
@@ -13,6 +15,7 @@ class JsonActions<T>(
     val dao: JsonDataQueries<T>,
     val actions: Actions,
 ) {
+    val jsonNoDefaults = Json { encodeDefaults = false }
     suspend fun create(element: T) = actions.invoke(
         JsonCreateAction(
             dao.table.name,
@@ -30,8 +33,9 @@ class JsonActions<T>(
 
     suspend fun patch(uuid: Uuid, element: T) {
         val existing = db.read { dao.getJsonElement(uuid) }
-        val new = dao.json.encodeToJsonElement(dao.serializer, element)
+        val new = jsonNoDefaults.encodeToJsonElement(dao.serializer, element)
         val patch = new - existing
+        if ((patch as? JsonObject)?.size == 0) return
         actions.invoke(
             JsonPatchAction(
                 table = dao.table.name,

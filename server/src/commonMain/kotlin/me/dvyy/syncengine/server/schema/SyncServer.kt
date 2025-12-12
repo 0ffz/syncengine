@@ -75,13 +75,14 @@ class SyncServer(
         // Listen to incoming requests
         launch {
             request.collect {
+                logger.v { "Received sync request: $it" }
                 if (it.encodedActions.isNotEmpty()) sync(it, user)
             }
         }
 
         // Respond back with all server updates (including from other clients)
         updates.collect {
-            val result = getUpdates(initialRequest.deviceId, user, lastFrameSent)
+            val result = getUpdates(uuid = initialRequest.deviceId, identity = user, lastFrameSeen = lastFrameSent)
             lastFrameSent = result.serverFrame
             if (result.changes.isNotEmpty()) send(result)
         }

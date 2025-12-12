@@ -19,5 +19,5 @@ FROM actions_list
 WHERE id <= :id;
 
 -- firstActionId
-SELECT min(id)
+SELECT min(id) AS min
 FROM actions_list;

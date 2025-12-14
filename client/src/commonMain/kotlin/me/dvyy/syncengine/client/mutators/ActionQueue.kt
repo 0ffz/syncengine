@@ -69,8 +69,13 @@ class ActionQueue(
             previous = reduced
         } else {
             logger.v { "Appending new action: $action" }
+            protobuf.encodeToByteArray(actionSerializer, action)
             // add as new action
-            queries.actions.append(protobuf.encodeToByteArray(actionSerializer, action))
+            try {
+                queries.actions.append(protobuf.encodeToByteArray(actionSerializer, action))
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
             previous = action
         }
     }
@@ -85,6 +90,9 @@ class ActionQueue(
 
     context(tx: Transaction)
     fun firstMutatorId(): Long = queries.actions.firstActionId().firstOrNull { getLong(0) } ?: -1
+
+    context(tx: Transaction)
+    fun count(): Long = queries.actions.count().first { getLong(it.count) }
 
     context(tx: WriteTransaction)
     fun clearAcknowledged(lastAcknowledged: Long) {

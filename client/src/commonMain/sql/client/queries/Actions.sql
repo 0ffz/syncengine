@@ -21,3 +21,7 @@ WHERE id <= :id;
 -- firstActionId
 SELECT min(id) AS min
 FROM actions_list;
+
+-- count
+SELECT count(ROWID) AS count
+FROM actions_list;

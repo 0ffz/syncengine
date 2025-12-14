@@ -44,6 +44,8 @@ class SyncClient(
 
     suspend operator fun invoke(action: Action) = actionQueue.invoke(action)
 
+    suspend fun getQueuedActionCount() = db.read { actionQueue.count() }
+
     suspend fun initialize() = db.write {
         clientDAO.create()
         syncedTables.forEach { it.create() }

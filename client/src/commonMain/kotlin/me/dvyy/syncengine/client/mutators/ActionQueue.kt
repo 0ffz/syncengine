@@ -9,6 +9,7 @@ import me.dvyy.sqlite.Transaction
 import me.dvyy.sqlite.WriteTransaction
 import me.dvyy.syncengine.actions.Action
 import me.dvyy.syncengine.actions.Actions
+import me.dvyy.syncengine.actions.IdentityAction
 import me.dvyy.syncengine.actions.PolymorphicIntSerializer
 import me.dvyy.syncengine.client.schema.ClientQueries
 import me.dvyy.syncengine.reducers.Reducers
@@ -41,6 +42,7 @@ class ActionQueue(
 
     context(tx: WriteTransaction)
     private fun applyReducersFor(action: Action) {
+        if (action == IdentityAction) return
         logger.v { "Applying action: $action" }
         reducers.actionsToReducers[action::class]?.invoke(tx, action)
     }
@@ -60,23 +62,32 @@ class ActionQueue(
 
     context(tx: WriteTransaction)
     fun append(action: Action) {
+        if (action == IdentityAction) return
         val reduced = previous?.let { action.reduce(it) }
         logger.v { "Previous action was $previous reduced $reduced" }
-        if (reduced != null) {
-            logger.v { "Appending reduced action: $reduced" }
-//            // replace last action with reduced
-            queries.actions.updateLastAction(protobuf.encodeToByteArray(actionSerializer, action))
-            previous = reduced
-        } else {
-            logger.v { "Appending new action: $action" }
-            protobuf.encodeToByteArray(actionSerializer, action)
-            // add as new action
-            try {
-                queries.actions.append(protobuf.encodeToByteArray(actionSerializer, action))
-            } catch (e: Exception) {
-                e.printStackTrace()
+        when {
+            reduced == IdentityAction -> {
+                queries.actions.deleteLastAction()
+                previous = null
             }
-            previous = action
+            // replace last action with reduced
+            reduced != null -> {
+                logger.v { "Appending reduced action: $reduced" }
+                queries.actions.updateLastAction(protobuf.encodeToByteArray(actionSerializer, action))
+                previous = reduced
+            }
+
+            else -> {
+                logger.v { "Appending new action: $action" }
+                protobuf.encodeToByteArray(actionSerializer, action)
+                // add as new action
+                try {
+                    queries.actions.append(protobuf.encodeToByteArray(actionSerializer, action))
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+                previous = action
+            }
         }
     }
 

@@ -8,4 +8,8 @@ interface Action {
      * Returns null if the two cannot be combined.
      */
     fun reduce(previous: Action): Action? = null
+
+    companion object {
+        val IDENTITY = IdentityAction
+    }
 }

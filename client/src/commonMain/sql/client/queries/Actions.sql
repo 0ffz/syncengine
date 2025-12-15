@@ -18,6 +18,11 @@ DELETE
 FROM actions_list
 WHERE id <= :id;
 
+-- deleteLastAction
+DELETE
+FROM actions_list
+WHERE id = ( SELECT max(id) FROM actions_list );
+
 -- firstActionId
 SELECT min(id) AS min
 FROM actions_list;

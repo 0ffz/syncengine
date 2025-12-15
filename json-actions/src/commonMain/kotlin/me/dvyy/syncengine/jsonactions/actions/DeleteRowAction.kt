@@ -10,4 +10,9 @@ import kotlin.uuid.Uuid
 data class DeleteRowAction(
     val table: String,
     val id: Uuid,
-) : Action
+) : Action {
+    override fun reduce(previous: Action): Action? = when (previous) {
+        is JsonCreateAction if previous.id == id -> Action.IDENTITY
+        else -> null
+    }
+}

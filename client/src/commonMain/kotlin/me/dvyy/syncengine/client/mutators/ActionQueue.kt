@@ -79,14 +79,14 @@ class ActionQueue(
 
             else -> {
                 logger.v { "Appending new action: $action" }
-                protobuf.encodeToByteArray(actionSerializer, action)
+
                 // add as new action
                 try {
                     queries.actions.append(protobuf.encodeToByteArray(actionSerializer, action))
+                    previous = action
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
-                previous = action
             }
         }
     }

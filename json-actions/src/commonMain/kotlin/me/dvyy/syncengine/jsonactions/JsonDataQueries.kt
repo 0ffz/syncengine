@@ -6,6 +6,7 @@ import kotlinx.serialization.json.JsonElement
 import me.dvyy.sqlite.Transaction
 import me.dvyy.sqlite.WriteTransaction
 import me.dvyy.sqlite.statement.NamedColumnSqliteStatement
+import me.dvyy.sqlite.statement.getUuid
 import me.dvyy.syncengine.schema.JsonTable
 import org.intellij.lang.annotations.Language
 import kotlin.uuid.Uuid
@@ -49,7 +50,13 @@ class JsonDataQueries<T>(
         id: Uuid,
         data: JsonElement,
     ) {
-        tx.exec("INSERT INTO $table (id, data, owner) VALUES (?, jsonb(?), ?)", id, data.toString(), tx.identity)
+        tx.exec(
+            """
+            INSERT OR REPLACE INTO $table (id, data, owner) 
+            SELECT :id, jsonb(:data), :owner
+            WHERE NOT EXISTS (SELECT 1 FROM $table WHERE id = :id AND owner = :owner AND data IS NOT null)
+            """.trimIndent(), id, data.toString(), tx.identity
+        )
     }
 
     context(tx: WriteTransaction)
@@ -85,4 +92,11 @@ class JsonDataQueries<T>(
             patchString, id, tx.identity
         )
     }
+
+    context(tx: Transaction)
+    fun forEach(block: (Uuid, T) -> Unit) = tx
+        .forEach("SELECT id, json(data) FROM $table WHERE data IS NOT null") {
+            block(getUuid(0), json.decodeFromString(serializer, getText(1)))
+        }
+
 }

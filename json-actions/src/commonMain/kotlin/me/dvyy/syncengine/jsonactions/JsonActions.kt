@@ -16,10 +16,10 @@ class JsonActions<T>(
     val actions: Actions,
 ) {
     val jsonNoDefaults = Json { encodeDefaults = false }
-    suspend fun create(element: T) = actions.invoke(
+    suspend fun create(element: T, uuid: Uuid = Uuid.random()) = actions.invoke(
         JsonCreateAction(
             dao.table.name,
-            Uuid.random(),
+            uuid,
             dao.json.encodeToJsonElement(dao.serializer, element)
         )
     )

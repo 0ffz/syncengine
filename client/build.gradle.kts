@@ -8,6 +8,9 @@ plugins {
 kotlin {
     jvm()
 
+    compilerOptions {
+//        freeCompilerArgs.add("-Xexplicit-backing-fields")
+    }
     sourceSets {
         commonMain {
             dependencies {

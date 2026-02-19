@@ -33,9 +33,26 @@ class ActionQueue(
     private val actionSerializer = PolymorphicIntSerializer.of(schema)
     private var previous: Action? = null
 
-    override suspend fun invoke(action: Action) {
-        db.write {
-            applyReducersFor(action) //TODO merge with last if possible
+    override suspend fun invoke(action: Action) = db.write { //TODO merge with last if possible
+        applyReducersFor(action)
+        append(action)
+    }
+
+    override suspend fun invoke(actions: Collection<Action>) = db.write {
+        for (action in actions) {
+            applyReducersFor(action)
+            append(action)
+        }
+    }
+
+    override fun invokeAsync(action: Action) = db.launchWrite {
+        applyReducersFor(action)
+        append(action)
+    }
+
+    override fun invokeAsync(actions: Collection<Action>) = db.launchWrite {
+        for (action in actions) {
+            applyReducersFor(action)
             append(action)
         }
     }

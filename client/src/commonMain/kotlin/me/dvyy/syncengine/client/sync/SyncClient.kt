@@ -1,15 +1,13 @@
 package me.dvyy.syncengine.client.sync
 
 import co.touchlab.kermit.Logger
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import me.dvyy.sqlite.Database
 import me.dvyy.sqlite.Transaction
 import me.dvyy.sqlite.WriteTransaction
 import me.dvyy.sqlite.statement.bindUuid
-import me.dvyy.syncengine.actions.Action
+import me.dvyy.syncengine.actions.Actions
 import me.dvyy.syncengine.client.kvstore.KVStoreProperty
 import me.dvyy.syncengine.client.mutators.ActionQueue
 import me.dvyy.syncengine.client.mutators.RollbackJsonTable
@@ -20,29 +18,39 @@ import me.dvyy.syncengine.sync.SyncRequest
 import me.dvyy.syncengine.sync.SyncResult
 import me.dvyy.syncengine.sync.SyncService
 import me.dvyy.syncengine.sync.TableChanges
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+sealed interface SyncStatus {
+    data class Connected(val job: Job) : SyncStatus
+    object Uninitialized : SyncStatus
+    data class Disconnected(val reason: Exception) : SyncStatus
+}
+
 /**
  * Entrypoint for client syncengine.
  */
+@OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 class SyncClient(
     private val logger: Logger,
     private val db: Database,
     private val actionQueue: ActionQueue,
     private val schema: Schema,
     private val syncService: SyncService,
-) {
-    private val clientDAO = ClientQueries()
+) : Actions by actionQueue {
     val syncedTables = schema.syncedTables.map { RollbackJsonTable(it) }
     val views = schema.views
     val lastFrameSeen = KVStoreProperty("lastFrameSeen")
-    private val _deviceId = KVStoreProperty("deviceId")
-    lateinit var deviceId: Uuid
+    private val _status = MutableStateFlow<SyncStatus>(SyncStatus.Uninitialized)
+    val status = _status.asStateFlow()
     val changesMade = db.watch("actions_list") {}
 
-    suspend operator fun invoke(action: Action) = actionQueue.invoke(action)
+    private val _deviceId = KVStoreProperty("deviceId")
+    lateinit var deviceId: Uuid
+    private val clientDAO = ClientQueries()
+    private val singleThreadScope = newSingleThreadContext("Sync")
 
     suspend fun getQueuedActionCount() = db.read { actionQueue.count() }
 
@@ -54,7 +62,26 @@ class SyncClient(
         deviceId = Uuid.parseHex(_deviceId.getString()!!)
     }
 
-    suspend fun establishSync() {
+    suspend fun startSyncJob(context: CoroutineContext) = withContext(singleThreadScope) {
+        if (status.value !is SyncStatus.Connected) {
+            val job = launch(context) {
+                try {
+                    establishSync()
+                } catch (e: Exception) {
+                    _status.update { SyncStatus.Disconnected(e) }
+                }
+            }
+            _status.value = SyncStatus.Connected(job)
+        }
+    }
+
+    suspend fun stopSyncJob() = withContext(singleThreadScope) {
+        val runningJob = (status.value as? SyncStatus.Connected)?.job ?: return@withContext
+        runningJob.cancel()
+        _status.value = SyncStatus.Uninitialized
+    }
+
+    private suspend fun establishSync() {
         var lastActionIdSent = -1L
         syncService.sync(
             deviceId,
@@ -96,11 +123,6 @@ class SyncClient(
                 logger.e(e) { "Failed to sync!" }
             }
         }
-    }
-
-    suspend fun sync() {
-        TODO()
-//        val updates = syncService.sync(request)
     }
 
     context(tx: WriteTransaction)

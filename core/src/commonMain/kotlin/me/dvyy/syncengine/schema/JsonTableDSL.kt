@@ -2,11 +2,13 @@ package me.dvyy.syncengine.schema
 
 import me.dvyy.sqlite.WriteTransaction
 import me.dvyy.syncengine.reducers.SyncProtocol
+import org.intellij.lang.annotations.Language
 
 
 class ViewBuilder(
     val from: JsonTable,
     val name: String,
+    val where: String? = null,
 ) {
     val columns = mutableListOf<Column>()
 
@@ -30,16 +32,21 @@ class ViewBuilder(
         columns += Column(name, SqliteDataType.BLOB)
     }
 
-    fun build() = JsonView(name, from, columns)
+    fun build() = JsonView(name, from, columns, where)
 }
 
-class JsonView(val name: String, val from: JsonTable, val columns: List<Column>) {
+class JsonView(
+    val name: String,
+    val from: JsonTable,
+    val columns: List<Column>,
+    val where: String? = null,
+) {
     fun viewStatement(from: String) = """
         SELECT
         id,
         ${columns.joinToString(",\n") { it.toStatement() }}
         FROM $from
-        WHERE data != jsonb('null')
+        WHERE data != jsonb('null') ${if (where != null) "AND $where" else ""}
     """.trimIndent()
 
     context(tx: WriteTransaction)
@@ -55,9 +62,11 @@ fun jsonTable(name: String): JsonTable {
 fun view(
     name: String,
     table: JsonTable,
+    @Language("SQLite")
+    where: String? = null,
     block: ViewBuilder.() -> Unit,
 ): JsonView {
-    return ViewBuilder(table, name).apply(block).build()
+    return ViewBuilder(table, name, where).apply(block).build()
 }
 
 fun schema(

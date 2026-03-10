@@ -74,11 +74,23 @@ class ActionQueue(
         }
     }
 
+    /**
+     * Invokes all stored actions in the queue
+     *
+     * @return The number of actions applied
+     */
     context(tx: WriteTransaction)
-    fun invokeAllStored() = forEachMutator { applyReducersFor(it) }
+    fun invokeAllStored(): Int {
+        var count = 0
+        forEachMutator {
+            applyReducersFor(it)
+            count++
+        }
+        return count
+    }
 
     context(tx: WriteTransaction)
-    fun append(action: Action) {
+    private fun append(action: Action) {
         if (action == IdentityAction) return
         val reduced = previous?.let { action.reduce(it) }
         logger.v { "Previous action was $previous reduced $reduced" }

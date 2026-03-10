@@ -2,6 +2,7 @@ package me.dvyy.syncengine.server.schema
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import me.dvyy.sqlite.Identity
 import me.dvyy.syncengine.sync.SyncRequest
 import me.dvyy.syncengine.sync.SyncResult
@@ -16,15 +17,16 @@ class MockAwaitingSyncService(val server: SyncServer, val user: Identity) : Sync
     private val requestReturn = Channel<Unit>(Channel.RENDEZVOUS)
 
     override suspend fun sync(uuid: Uuid, initialRequest: SyncRequest, request: Flow<SyncRequest>): Flow<SyncResult> {
-        TODO("Not yet implemented")
+        return flowOf(sync(initialRequest))
     }
-//    override suspend fun sync(request: SyncRequest): SyncResult {
-//        // Wait for signal before proceeding
-//        requestStart.receive()
-//        val result = server.sync(request, user)
-//        requestReturn.receive()
-//        return result
-//    }
+
+    suspend fun sync(request: SyncRequest): SyncResult {
+        // Wait for signal before proceeding
+        requestStart.receive()
+        val result = server.sync(request, user)
+        requestReturn.receive()
+        return result
+    }
 
     suspend fun sendRequest() {
         requestStart.send(Unit)

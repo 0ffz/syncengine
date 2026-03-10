@@ -62,40 +62,60 @@ class SyncClient(
         deviceId = Uuid.parseHex(_deviceId.getString()!!)
     }
 
-    suspend fun startSyncJob(context: CoroutineContext) = withContext(singleThreadScope) {
-        if (status.value !is SyncStatus.Connected) {
-            val job = launch(context) {
-                try {
-                    establishSync()
-                } catch (e: Exception) {
-                    _status.update { SyncStatus.Disconnected(e) }
+    suspend fun startSyncJob(context: CoroutineContext): Job = withContext(singleThreadScope + NonCancellable) {
+        when (val status = status.value) {
+            !is SyncStatus.Connected -> {
+                val job = launch(context) {
+                    try {
+                        establishSync()
+                    } catch (e: Exception) {
+                        _status.update { SyncStatus.Disconnected(e) }
+                        throw e
+                    }
                 }
+                _status.value = SyncStatus.Connected(job)
+                job
             }
-            _status.value = SyncStatus.Connected(job)
+
+            else -> {
+                status.job
+            }
         }
     }
 
-    suspend fun stopSyncJob() = withContext(singleThreadScope) {
+    suspend fun stopSyncJob() = withContext(singleThreadScope + NonCancellable) {
         val runningJob = (status.value as? SyncStatus.Connected)?.job ?: return@withContext
         runningJob.cancel()
         _status.value = SyncStatus.Uninitialized
     }
 
+    suspend fun sync() {
+        val updates = syncService.sync(deviceId, initialSyncRequest(), emptyFlow()).first()
+        db.write {
+            reconcileDiff(updates)
+        }
+    }
+
+    private suspend fun initialSyncRequest(): SyncRequest {
+        db.write {
+            actionQueue.preventPreviousReducing()
+        }
+        val request: SyncRequest = db.read {
+            getSyncRequest(-1L)
+        }
+        return request
+    }
     private suspend fun establishSync() {
+        logger.v { "Establishing sync job..." }
         var lastActionIdSent = -1L
         syncService.sync(
             deviceId,
             run {
-                db.write {
-                    actionQueue.preventPreviousReducing()
-                }
-                val request: SyncRequest = db.read {
-                    getSyncRequest(lastActionIdSent)
-                }
+                val request = initialSyncRequest()
                 lastActionIdSent = request.lastActionId
                 request
             },
-            db.watch("actions_list") { println("Detected action changes!") }.debounce(0.1.seconds).map {
+            db.watch("actions_list") { logger.v { "Detected action changes!" } }.debounce(0.1.seconds).map {
                 try {
                     db.write {
                         actionQueue.preventPreviousReducing()
@@ -118,7 +138,6 @@ class SyncClient(
                 db.write {
                     reconcileDiff(updates)
                 }
-                logger.v { "Reconciled!" }
             } catch (e: Exception) {
                 logger.e(e) { "Failed to sync!" }
             }
@@ -176,12 +195,11 @@ class SyncClient(
     context(tx: WriteTransaction)
     internal fun reconcileDiff(updates: SyncResult) {
         rollbackAll()
-        logger.v { "Clearing up to ${updates.lastActionIdApplied}" }
         actionQueue.clearAcknowledged(updates.lastActionIdApplied)
         updates.changes.forEach { applyTableChanges(it) }
         lastFrameSeen.setString(updates.serverFrame.toString())
-        logger.v { "Reconciling with local changes..." }
-        actionQueue.invokeAllStored()
+        val reapplied = actionQueue.invokeAllStored()
+        logger.v { "Reconciled: Cleared up to ${updates.lastActionIdApplied}, applied ${updates.changes.size} row changes, re-applied $reapplied local actions..." }
     }
 
     companion object {

@@ -12,7 +12,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.Uuid
 
 
-class MockAwaitingSyncService(val server: SyncServer, val user: Identity) : SyncService {
+class MockAwaitingSyncService(val server: Workspace, val user: Identity) : SyncService {
     private val requestStart = Channel<Unit>(Channel.RENDEZVOUS)
     private val requestReturn = Channel<Unit>(Channel.RENDEZVOUS)
 
@@ -37,9 +37,9 @@ class MockAwaitingSyncService(val server: SyncServer, val user: Identity) : Sync
     }
 }
 
-fun SyncServer.mockAwaitingService(user: Identity) = MockAwaitingSyncService(this, user)
+fun Workspace.mockAwaitingService(user: Identity) = MockAwaitingSyncService(this, user)
 
-fun SyncServer.mockService(
+fun Workspace.mockService(
     user: Identity,
     delay: Duration = 0.seconds,
 ) = object : SyncService {

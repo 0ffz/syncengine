@@ -9,6 +9,7 @@ INSERT OR
 REPLACE INTO clients (uuid, owner, last_action_applied)
 VALUES (:uuid, :owner, :lastMutatorApplied);
 
+
 -- fun setLastFrameSeen(uuid: kotlin.uuid.Uuid, lastFrameSeen: Long, owner: Long)
 -- UPDATE clients
 -- SET last_frame_seen = :lastFrameSeen

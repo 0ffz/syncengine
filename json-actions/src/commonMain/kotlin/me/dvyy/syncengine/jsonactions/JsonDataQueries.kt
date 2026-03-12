@@ -48,8 +48,17 @@ class JsonDataQueries<T>(
     context(tx: WriteTransaction)
     fun create(
         id: Uuid,
+        data: T,
+    ): Uuid {
+        create(id, json.encodeToJsonElement(serializer, data))
+        return id
+    }
+
+    context(tx: WriteTransaction)
+    fun create(
+        id: Uuid,
         data: JsonElement,
-    ) {
+    ): Uuid {
         tx.exec(
             """
             INSERT OR REPLACE INTO $table (id, data, owner) 
@@ -57,6 +66,7 @@ class JsonDataQueries<T>(
             WHERE NOT EXISTS (SELECT 1 FROM $table WHERE id = :id AND owner = :owner AND data IS NOT null)
             """.trimIndent(), id, data.toString(), tx.identity
         )
+        return id
     }
 
     context(tx: WriteTransaction)
@@ -91,6 +101,16 @@ class JsonDataQueries<T>(
             """.trimIndent(),
             patchString, id, tx.identity
         )
+    }
+
+    context(tx: Transaction)
+    fun query(
+        @Language("SQLite", prefix = "SELECT * FROM blank WHERE ") query: String,
+        vararg parameters: Any,
+    ): Pair<Uuid, T>? {
+        return tx.select("SELECT id, json(data) FROM $table WHERE $query", *parameters).firstOrNull {
+            getUuid(0) to json.decodeFromString(serializer, getText(1))
+        }
     }
 
     context(tx: Transaction)

@@ -15,7 +15,7 @@ import me.dvyy.syncengine.reducers.reducers
 import me.dvyy.syncengine.reducers.syncProtocol
 import me.dvyy.syncengine.schema.jsonTable
 import me.dvyy.syncengine.schema.schema
-import me.dvyy.syncengine.server.schema.SyncServer
+import me.dvyy.syncengine.server.schema.Workspace
 import me.dvyy.syncengine.server.schema.mockAwaitingService
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -34,7 +34,7 @@ class SingleClientTests {
     val reducers = reducers {
         jsonReducers(listOf(tasks))
     }
-    val server = SyncServer.of(serverDatabase, reducers, schema)
+    val server = Workspace.of(serverDatabase, reducers, schema)
     val mockService = server.mockAwaitingService(user = 0)
     val client = SyncClient.of(clientDatabase, reducers, schema, mockService)
 

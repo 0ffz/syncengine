@@ -16,10 +16,12 @@ kotlin {
             dependencies {
                 dependencies {
                     api(projects.core)
+                    implementation(projects.jsonActions)
                     implementation(libs.kotlinx.serialization.json)
                     implementation(libs.kotlinx.serialization.protobuf)
                     implementation(libs.kotlinx.coroutines.core)
                     implementation(libs.kermit)
+                    implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
                 }
             }
         }

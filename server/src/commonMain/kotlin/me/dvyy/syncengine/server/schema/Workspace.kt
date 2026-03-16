@@ -53,6 +53,7 @@ class Workspace(
                 logger.v { "Received sync request: $it" }
                 if (it.encodedActions.isNotEmpty()) sync(it, user)
             }
+            this@channelFlow.close()
         }
 
         // Respond back with all server updates (including from other clients)

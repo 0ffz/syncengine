@@ -23,10 +23,12 @@ class WorkspaceRepository(
     init {
         workspacesFolder.createDirectories()
     }
-    val dbPool: ItemPool<Workspace> = ItemPool(initialize = {
+
+    val dbPool: ItemPool<Workspace> = ItemPool(initialize = { id ->
+        Logger.d { "Opening workspace database $id" }
         Workspace.of(
             db = Database(
-                "${workspacesFolder.absolutePathString()}/${it.toHexDashString()}.db"
+                "${workspacesFolder.absolutePathString()}/${id.toHexDashString()}.db"
             ),
             schema = schema,
             reducers = reducers,
@@ -37,8 +39,14 @@ class WorkspaceRepository(
     val workspaces = JsonDataQueries(WorkspaceModel.serializer(), UserRestrictedJsonTable(jsonTable("workspaces")))
 
     suspend inline fun <T> use(identity: Identity, crossinline use: suspend (Workspace) -> T): T {
-        val workspaceUuid = rootDb.read { workspaces.query("data -> 'owner' = ?", identity)?.first }
-            ?: rootDb.write { workspaces.create(Uuid.random(), WorkspaceModel(name = "Unnamed", owner = identity)) }
+        val workspaceUuid = rootDb.read(identity) { workspaces.query("data ->> 'owner' = ?", identity)?.first }
+            ?: rootDb.write(identity) {
+                workspaces.create(
+                    Uuid.random(),
+                    WorkspaceModel(name = "Unnamed", owner = identity)
+                )
+            }
+        Logger.v { "Using workspace database $workspaceUuid" }
         return dbPool.use(workspaceUuid, use)
     }
 }

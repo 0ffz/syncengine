@@ -1,5 +1,6 @@
 package me.dvyy.syncengine.server.schema
 
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.util.concurrent.ConcurrentHashMap
@@ -36,7 +37,10 @@ class ItemPool<R>(
                 } finally {
                     onClose(item)
                 }
-            }.onCompletion { cacheMap.remove(id, flowInstance) }
+            }.onCompletion {
+                Logger.d { "Closing workspace database $id" }
+                cacheMap.remove(id, flowInstance)
+            }
                 .shareIn(
                     scope,
                     started = SharingStarted.WhileSubscribed(stopTimeoutMillis, replayExpirationMillis = 0),
@@ -56,7 +60,6 @@ suspend fun main() {
                 println("Got $it")
                 delay(3000)
             }
-
         }
         launch {
             pool.use(id) {

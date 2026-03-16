@@ -60,7 +60,7 @@ class ActionQueue(
     context(tx: WriteTransaction)
     private fun applyReducersFor(action: Action) {
         if (action == IdentityAction) return
-        logger.v { "Applying action: $action" }
+        logger.d { "Applying action: ${action.prettyString(actionSerializer)}" }
         reducers.actionsToReducers[action::class]?.invoke(tx, action)
     }
 
@@ -93,21 +93,21 @@ class ActionQueue(
     private fun append(action: Action) {
         if (action == IdentityAction) return
         val reduced = previous?.let { action.reduce(it) }
-        logger.v { "Previous action was $previous reduced $reduced" }
         when {
             reduced == IdentityAction -> {
+                logger.v { "Undoing previous: ${previous?.prettyString(actionSerializer)}" }
                 queries.actions.deleteLastAction()
                 previous = null
             }
             // replace last action with reduced
             reduced != null -> {
-                logger.v { "Appending reduced action: $reduced" }
+                logger.v { "Replacing with reduced: ${reduced.prettyString(actionSerializer)}" }
                 queries.actions.updateLastAction(protobuf.encodeToByteArray(actionSerializer, action))
                 previous = reduced
             }
 
             else -> {
-                logger.v { "Appending new action: $action" }
+                logger.v { "Appending as new" }
 
                 // add as new action
                 try {

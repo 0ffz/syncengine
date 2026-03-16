@@ -48,7 +48,7 @@ class ServerActionProcessor(
             .let { if (it > actions.lastIndex) 0 else it }
         for (index in startIndex..actions.lastIndex) {
             val action = decodeAction(actions[index])
-            logger.v { "Applying action: $action" }
+            logger.v { "Applying action: ${action.prettyString(actionSerializer)}" }
             reducers.actionsToReducers[action::class]?.invoke(tx, action)
         }
 

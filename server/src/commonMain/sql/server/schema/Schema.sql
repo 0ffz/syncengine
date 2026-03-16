@@ -11,10 +11,3 @@ CREATE TABLE IF NOT EXISTS syncengine_store
     key   TEXT PRIMARY KEY,
     value TEXT
 ) STRICT;
-
-CREATE TABLE IF NOT EXISTS workspaces
-(
-    uuid  BLOB PRIMARY KEY,
-    owner INTEGER NOT NULL,
-    name  TEXT
-) STRICT;

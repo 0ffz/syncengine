@@ -149,6 +149,13 @@ class SyncClient(
         syncedTables.forEach { it.rollback() }
     }
 
+    suspend fun clearLocalActions() {
+        db.write {
+            rollbackAll()
+            actionQueue.clearAcknowledged(Long.MAX_VALUE)
+        }
+    }
+
 
     @OptIn(ExperimentalUuidApi::class)
     context(tx: Transaction)

@@ -27,6 +27,7 @@ class SyncServer(
 
     suspend fun initialize() = rootDb.write {
         ServerQueries().create()
+        workspaces.workspaces.table.create()
     }
 
 

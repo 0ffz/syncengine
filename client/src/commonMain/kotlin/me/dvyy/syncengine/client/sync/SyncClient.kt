@@ -18,7 +18,6 @@ import me.dvyy.syncengine.sync.SyncRequest
 import me.dvyy.syncengine.sync.SyncResult
 import me.dvyy.syncengine.sync.SyncService
 import me.dvyy.syncengine.sync.TableChanges
-import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -62,10 +61,10 @@ class SyncClient(
         deviceId = Uuid.parseHex(_deviceId.getString()!!)
     }
 
-    suspend fun startSyncJob(context: CoroutineContext): Job = withContext(singleThreadScope + NonCancellable) {
+    suspend fun startSyncJob(scope: CoroutineScope): Job = withContext(singleThreadScope + NonCancellable) {
         when (val status = status.value) {
             !is SyncStatus.Connected -> {
-                val job = launch(context) {
+                val job = scope.launch {
                     try {
                         establishSync()
                     } catch (e: Exception) {
@@ -206,7 +205,7 @@ class SyncClient(
         updates.changes.forEach { applyTableChanges(it) }
         lastFrameSeen.setString(updates.serverFrame.toString())
         val reapplied = actionQueue.invokeAllStored()
-        logger.v { "Reconciled: Cleared up to ${updates.lastActionIdApplied}, applied ${updates.changes.size} row changes, re-applied $reapplied local actions..." }
+        logger.v { "Reconciled: Cleared up to ${updates.lastActionIdApplied}, applied ${updates.changes.sumOf { it.changes.size }} row changes, re-applied $reapplied local actions..." }
     }
 
     companion object {

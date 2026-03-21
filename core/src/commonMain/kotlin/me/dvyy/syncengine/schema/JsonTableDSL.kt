@@ -53,10 +53,38 @@ class JsonView(
     fun create() {
         tx.exec("CREATE VIEW IF NOT EXISTS $name AS ${viewStatement(from.name)}")
     }
+
+    override fun toString(): String = name
 }
 
-fun jsonTable(name: String): JsonTable {
-    return JsonTable(name)
+data class TableIndex(
+    val nameSuffix: String,
+    val unique: Boolean,
+    val index: String,
+) {
+    fun createStatement(tableName: String): String {
+        return "CREATE ${if (unique) "UNIQUE " else ""}INDEX auto_${tableName}_$nameSuffix ON $tableName($index)"
+    }
+}
+
+class JsonTableBuilder {
+    val indexes = mutableListOf<TableIndex>()
+    fun index(
+        name: String,
+        @Language("SQLite", prefix = "CREATE INDEX example ON example(", suffix = ")") index: String,
+        unique: Boolean = false,
+    ) {
+        indexes.add(TableIndex(name, unique, index))
+    }
+
+    fun build(): List<TableIndex> = indexes.toList()
+}
+
+fun jsonTable(
+    name: String,
+    indexes: JsonTableBuilder.() -> Unit = {},
+): JsonTable {
+    return JsonTable(name, JsonTableBuilder().apply(indexes).build())
 }
 
 fun view(

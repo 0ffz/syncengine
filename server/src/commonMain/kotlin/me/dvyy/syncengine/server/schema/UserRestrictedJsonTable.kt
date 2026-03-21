@@ -3,8 +3,7 @@ package me.dvyy.syncengine.server.schema
 import me.dvyy.sqlite.WriteTransaction
 import me.dvyy.syncengine.schema.JsonTable
 
-class UserRestrictedJsonTable(from: JsonTable) : JsonTable(from.name) {
-
+class UserRestrictedJsonTable(from: JsonTable) : JsonTable(from.name, from.indexes) {
     context(tx: WriteTransaction)
     override fun create() {
         tx.exec(
@@ -38,6 +37,7 @@ class UserRestrictedJsonTable(from: JsonTable) : JsonTable(from.name) {
                 END;
             """.trimIndent()
         )
+        super.createIndexes()
     }
 //    context(tx: WriteTransaction)
 //    fun createIndexes() {

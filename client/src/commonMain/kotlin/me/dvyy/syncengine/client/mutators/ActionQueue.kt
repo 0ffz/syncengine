@@ -61,7 +61,12 @@ class ActionQueue(
     private fun applyReducersFor(action: Action) {
         if (action == IdentityAction) return
         logger.d { "Applying action: ${action.prettyString(actionSerializer)}" }
-        reducers.actionsToReducers[action::class]?.invoke(tx, action)
+        try {
+            reducers.actionsToReducers[action::class]?.invoke(tx, action)
+        } catch (exception: Exception) {
+            Logger.e { "Error applying action" }
+            throw exception
+        }
     }
 
     fun SQLiteStatement.getMutator(index: Int) = protobuf.decodeFromByteArray(actionSerializer, getBlob(index))

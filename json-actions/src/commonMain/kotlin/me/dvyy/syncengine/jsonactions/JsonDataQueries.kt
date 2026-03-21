@@ -62,11 +62,35 @@ class JsonDataQueries<T>(
         tx.exec(
             """
             INSERT OR REPLACE INTO $table (id, data, owner) 
-            SELECT :id, jsonb(:data), :owner
-            WHERE NOT EXISTS (SELECT 1 FROM $table WHERE id = :id AND owner = :owner AND data IS NOT null)
-            """.trimIndent(), id, data.toString(), tx.identity
+            SELECT :id, jsonb(:data), -1
+            WHERE NOT EXISTS (SELECT 1 FROM $table WHERE id = :id AND data IS NOT null)
+            """.trimIndent(), id, data.toString()
         )
         return id
+    }
+
+    context(tx: WriteTransaction)
+    fun upsert(
+        id: Uuid,
+        data: T,
+    ): Uuid {
+        upsert(id, json.encodeToJsonElement(serializer, data))
+        return id
+    }
+
+    context(tx: WriteTransaction)
+    fun upsert(
+        id: Uuid,
+        data: JsonElement,
+    ): Uuid {
+        tx.exec(
+            """
+            INSERT OR REPLACE INTO $table (id, data, owner) 
+            SELECT :id, jsonb(:data), -1
+            """.trimIndent(), id, data.toString()
+        )
+        return id
+
     }
 
     context(tx: WriteTransaction)

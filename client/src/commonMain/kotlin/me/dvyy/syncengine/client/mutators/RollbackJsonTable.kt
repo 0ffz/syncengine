@@ -5,7 +5,7 @@ import me.dvyy.syncengine.schema.JsonTable
 
 class RollbackJsonTable(
     from: JsonTable,
-) : JsonTable(from.name) {
+) : JsonTable(from.name, from.indexes) {
     context(tx: WriteTransaction)
     override fun create() {
         tx.exec(
@@ -18,6 +18,7 @@ class RollbackJsonTable(
             ) STRICT;
             """.trimIndent(),
         )
+        super.createIndexes()
         createTriggers()
     }
 

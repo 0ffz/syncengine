@@ -1,6 +1,5 @@
 package me.dvyy.syncengine.jsonactions.actions
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import me.dvyy.syncengine.actions.Action
@@ -9,7 +8,6 @@ import me.dvyy.syncengine.schema.plus
 import kotlin.uuid.Uuid
 
 @Serializable
-@SerialName("patch")
 data class JsonPatchAction(
     val table: String,
     val id: Uuid,

@@ -14,6 +14,7 @@ import me.dvyy.syncengine.client.mutators.RollbackJsonTable
 import me.dvyy.syncengine.client.schema.ClientQueries
 import me.dvyy.syncengine.reducers.Reducers
 import me.dvyy.syncengine.schema.Schema
+import me.dvyy.syncengine.schema.jsonTable
 import me.dvyy.syncengine.sync.SyncRequest
 import me.dvyy.syncengine.sync.SyncResult
 import me.dvyy.syncengine.sync.SyncService
@@ -41,6 +42,7 @@ class SyncClient(
 ) : Actions by actionQueue {
     val syncedTables = schema.syncedTables.map { RollbackJsonTable(it) }
     val views = schema.views
+    val kvStore = jsonTable("KVStore")
     val lastFrameSeen = KVStoreProperty("lastFrameSeen")
     private val _status = MutableStateFlow<SyncStatus>(SyncStatus.Uninitialized)
     val status = _status.asStateFlow()

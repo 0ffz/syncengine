@@ -5,12 +5,11 @@ import me.dvyy.syncengine.actions.Action
 import kotlin.uuid.Uuid
 
 @Serializable
-data class DeleteRowAction(
-    val table: String,
+data class DeleteEntityAction(
     val id: Uuid,
 ) : Action {
     override fun reduce(previous: Action): Action? = when (previous) {
-        is JsonCreateAction if previous.id == id && previous.table == table -> Action.IDENTITY
+        is JsonCreateAction if previous.id == id -> Action.IDENTITY
         else -> null
     }
 }

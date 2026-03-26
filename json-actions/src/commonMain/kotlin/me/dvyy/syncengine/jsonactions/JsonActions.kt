@@ -16,13 +16,14 @@ class JsonActions<T>(
     val actions: Actions,
 ) {
     val jsonNoDefaults = Json { encodeDefaults = false }
-    suspend fun create(element: T, uuid: Uuid = Uuid.random()) = actions.invoke(
+
+    suspend fun create(element: T, uuid: Uuid = Uuid.generateV7()): Uuid = actions.invoke(
         JsonCreateAction(
             dao.table.name,
             uuid,
             dao.json.encodeToJsonElement(dao.serializer, element)
         )
-    )
+    ).let { uuid }
 
     suspend fun delete(uuid: Uuid) = actions.invoke(
         DeleteRowAction(

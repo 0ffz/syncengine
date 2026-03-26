@@ -1,10 +1,7 @@
 package me.dvyy.syncengine.jsonactions.reducers
 
 import me.dvyy.syncengine.jsonactions.JsonDataQueries
-import me.dvyy.syncengine.jsonactions.actions.DeleteEntityAction
-import me.dvyy.syncengine.jsonactions.actions.DeleteRowAction
-import me.dvyy.syncengine.jsonactions.actions.JsonCreateAction
-import me.dvyy.syncengine.jsonactions.actions.JsonPatchAction
+import me.dvyy.syncengine.jsonactions.actions.*
 import me.dvyy.syncengine.reducers.MutableReducers
 
 fun MutableReducers.jsonReducers(
@@ -24,5 +21,8 @@ fun MutableReducers.jsonReducers(
     }
     reduce<JsonPatchAction> {
         getTable(it.table).patch(it.id, it.patch.toString())
+    }
+    reduce<JsonSetAction> {
+        getTable(it.table).jsonSet(it.id, it.path, it.patch.toString())
     }
 }

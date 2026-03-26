@@ -1,12 +1,14 @@
 package me.dvyy.syncengine.jsonactions
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import me.dvyy.sqlite.Database
 import me.dvyy.syncengine.actions.Actions
 import me.dvyy.syncengine.jsonactions.actions.DeleteRowAction
 import me.dvyy.syncengine.jsonactions.actions.JsonCreateAction
 import me.dvyy.syncengine.jsonactions.actions.JsonPatchAction
+import me.dvyy.syncengine.jsonactions.actions.JsonSetAction
 import me.dvyy.syncengine.schema.minus
 import kotlin.uuid.Uuid
 
@@ -42,6 +44,17 @@ class JsonActions<T>(
                 table = dao.table.name,
                 id = uuid,
                 patch = patch
+            )
+        )
+    }
+
+    suspend fun set(uuid: Uuid, path: String, element: JsonElement) {
+        actions.invoke(
+            JsonSetAction(
+                table = dao.table.name,
+                id = uuid,
+                path = path,
+                patch = element
             )
         )
     }

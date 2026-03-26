@@ -36,7 +36,7 @@ class JsonDataQueries<T>(
         id: Uuid,
         jsonPath: String,
         statement: NamedColumnSqliteStatement.() -> T,
-    ): T? = tx.getOrNull("SELECT json(data) FROM $table WHERE id = ? AND data IS NOT null", id) {
+    ): T? = tx.getOrNull("SELECT data ->> ? FROM $table WHERE id = ? AND data IS NOT null", jsonPath, id) {
         statement()
     }
 

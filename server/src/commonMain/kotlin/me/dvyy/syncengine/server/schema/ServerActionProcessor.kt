@@ -32,7 +32,7 @@ class ServerActionProcessor(
         val actions = request.encodedActions
 
         // Last action we've applied on the server
-        val lastApplied = server.clients.getLastActionApplied(request.deviceId, tx.identity)
+        val lastApplied = server.clients.getLastActionApplied(request.deviceId)
             .firstOrNull { getLong(it.last_action_applied) }
             ?: -1
         // Last action applied after this transaction completes (will update previous value)

@@ -101,14 +101,14 @@ class JsonDataQueries<T>(
 
     context(tx: WriteTransaction)
     fun delete(id: Uuid) {
-        tx.exec("UPDATE $table SET data = null WHERE id = ? AND owner = ?", id, tx.identity)
+        tx.exec("UPDATE $table SET data = null WHERE id = ?", id)
     }
 
     context(tx: WriteTransaction)
     fun jsonSet(id: Uuid, path: String, value: String) {
         tx.exec(
-            "UPDATE $table SET data = jsonb_set(data, ?, jsonb(?)) WHERE id = ? AND owner = ?",
-            path, value, id, tx.identity
+            "UPDATE $table SET data = jsonb_set(data, ?, jsonb(?)) WHERE id = ?",
+            path, value, id
         )
     }
 
@@ -121,9 +121,9 @@ class JsonDataQueries<T>(
             """
             UPDATE $table SET
             data = jsonb_patch(data, jsonb(?))
-            WHERE id = ? AND owner = ?
+            WHERE id = ?
             """.trimIndent(),
-            patchString, id, tx.identity
+            patchString, id,
         )
     }
 

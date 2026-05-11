@@ -32,8 +32,8 @@ class Workspace(
     private val views: List<JsonView> = schema.views
     val dao = ServerQueries()
 
-    suspend fun getLastActionApplied(uuid: Uuid, identity: Identity): Long = db.read {
-        dao.clients.getLastActionApplied(uuid, identity)
+    suspend fun getLastActionApplied(uuid: Uuid): Long = db.read {
+        dao.clients.getLastActionApplied(uuid)
             .firstOrNull { getLong(it.last_action_applied) }
             ?: -1
     }
@@ -118,7 +118,8 @@ class Workspace(
     ): SyncResult {
         return db.write(identity = identity) {
             val lastApplied =
-                dao.clients.getLastActionApplied(uuid, identity).firstOrNull { getLong(it.last_action_applied) }
+                dao.clients.getLastActionApplied(uuid)
+                    .firstOrNull { getLong(it.last_action_applied) }
                     ?: -1
             SyncResult(
                 lastActionIdApplied = lastApplied,
@@ -134,9 +135,8 @@ class Workspace(
         TableChanges(
             table = table.name,
             changes = tx.select(
-                "SELECT id, data FROM $table WHERE frame > ? AND owner = ? AND data IS NOT null",
+                "SELECT id, data FROM $table WHERE frame > ? AND data IS NOT null",
                 frame,
-                tx.identity
             )
                 .map {
                     RowChange(
@@ -145,9 +145,8 @@ class Workspace(
                     )
                 },
             deletions = tx.select(
-                "SELECT id, data FROM $table WHERE frame > ? AND owner = ? AND data IS null",
+                "SELECT id, data FROM $table WHERE frame > ? AND data IS null",
                 frame,
-                tx.identity
             ).map {
                 getUuid(0)
             }

@@ -12,8 +12,10 @@ pluginManagement {
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
         mavenLocal()
     }
-//    includeBuild("../sqlite-kt")
+    includeBuild("../sqlite-kt")
 }
+
+includeBuild("../sqlite-kt")
 
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"

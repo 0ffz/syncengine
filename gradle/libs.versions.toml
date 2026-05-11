@@ -4,7 +4,7 @@ kotlin = "2.3.10"
 agp = "8.13.2"
 
 [libraries]
-sqlite-kt = "me.dvyy:sqlite-kt:0.0.3-alpha.2"
+sqlite-kt = "me.dvyy.sqlite:sqlite-kt:0.0.3-alpha.2"
 kotlinx-serialization-json = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1"
 kotlinx-serialization-cbor = "org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.8.1"
 kotlinx-serialization-protobuf = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.8.1"

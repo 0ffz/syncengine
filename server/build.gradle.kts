@@ -10,6 +10,7 @@ kotlin {
         freeCompilerArgs.add("-Xcontext-parameters")
     }
     jvm()
+    jvmToolchain(21)
 
     sourceSets {
         commonMain {

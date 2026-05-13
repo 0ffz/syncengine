@@ -1,7 +1,7 @@
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlinx.serialization)
-    `maven-publish`
+    alias(miaLibs.plugins.kotlin.multiplatform)
+    alias(miaLibs.plugins.kotlinx.serialization)
+    alias(miaLibs.plugins.mia.publication)
 }
 
 kotlin {
@@ -15,13 +15,12 @@ kotlin {
                     implementation(projects.server)
                     implementation(projects.client)
                     implementation(projects.jsonActions)
-                    implementation(libs.kotlinx.serialization.json)
-                    implementation(libs.kotlinx.serialization.cbor)
-                    implementation(libs.kotlinx.serialization.protobuf)
-                    implementation(libs.kotlinx.coroutines.test)
-                    implementation(libs.kermit)
-                    implementation(libs.kotest.assertions)
-                    implementation(libs.kotlinx.coroutines.test)
+                    implementation(miaLibs.kermit)
+                    implementation(miaLibs.kotlinx.serialization.json)
+                    implementation(miaLibs.kotlinx.serialization.cbor)
+                    implementation(miaLibs.kotlinx.serialization.protobuf)
+                    implementation(miaLibs.kotlinx.coroutines.test)
+                    implementation(miaLibs.kotest.assertions)
                     implementation(kotlin("test"))
                 }
             }

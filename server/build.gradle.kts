@@ -1,7 +1,7 @@
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlinx.serialization)
-    `maven-publish`
+    alias(miaLibs.plugins.kotlin.multiplatform)
+    alias(miaLibs.plugins.kotlinx.serialization)
+    alias(miaLibs.plugins.mia.publication)
     id("me.dvyy.sqlite.codegen")
 }
 
@@ -18,11 +18,11 @@ kotlin {
                 dependencies {
                     api(projects.core)
                     implementation(projects.jsonActions)
-                    implementation(libs.kotlinx.serialization.json)
-                    implementation(libs.kotlinx.serialization.protobuf)
-                    implementation(libs.kotlinx.coroutines.core)
-                    implementation(libs.kermit)
-                    implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
+                    implementation(miaLibs.kotlinx.serialization.json)
+                    implementation(miaLibs.kotlinx.serialization.protobuf)
+                    implementation(miaLibs.kotlinx.coroutines)
+                    implementation(miaLibs.kermit)
+                    implementation(libs.caffeine)
                 }
             }
         }

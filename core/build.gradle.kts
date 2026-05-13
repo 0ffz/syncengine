@@ -1,7 +1,7 @@
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlinx.serialization)
-    `maven-publish`
+    alias(miaLibs.plugins.kotlin.multiplatform)
+    alias(miaLibs.plugins.kotlinx.serialization)
+    alias(miaLibs.plugins.mia.publication)
 }
 
 kotlin {
@@ -12,11 +12,11 @@ kotlin {
         commonMain {
             dependencies {
                 dependencies {
-                    api(libs.sqlite.kt)
-                    implementation(libs.kotlinx.serialization.json)
-                    implementation(libs.kotlinx.serialization.cbor)
-                    implementation(libs.kotlinx.coroutines.core)
-                    implementation(libs.kermit)
+                    api(miaLibs.sqlite.kt)
+                    implementation(miaLibs.kotlinx.serialization.json)
+                    implementation(miaLibs.kotlinx.serialization.cbor)
+                    implementation(miaLibs.kotlinx.coroutines)
+                    implementation(miaLibs.kermit)
                 }
             }
         }

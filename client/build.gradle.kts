@@ -2,7 +2,7 @@ plugins {
     alias(miaLibs.plugins.kotlin.multiplatform)
     alias(miaLibs.plugins.kotlinx.serialization)
     alias(miaLibs.plugins.mia.publication)
-    id("me.dvyy.sqlite.codegen")
+    alias(miaLibs.plugins.sqlite.kt.codegen)
 }
 
 kotlin {

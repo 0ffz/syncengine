@@ -1,12 +1,9 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 plugins {
-//    alias(libs.plugins.androidApplication) apply false
     alias(miaLibs.plugins.kotlin.multiplatform) apply false
     alias(miaLibs.plugins.kotlin.jvm) apply false
-    //TODO add sqlite codegen plugin to catalog
-//    alias(miaLibs.plugins.sqlite.codegen) apply false
-    id("me.dvyy.sqlite.codegen") version "0.1.0-dev.0" apply false
+    alias(miaLibs.plugins.sqlite.kt.codegen) apply false
 }
 
 allprojects {

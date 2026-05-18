@@ -85,8 +85,12 @@ class JsonDataQueries<T>(
     ): Uuid {
         tx.exec(
             """
-            INSERT OR REPLACE INTO $table (id, data, owner) 
-            SELECT :id, jsonb(:data), -1
+            INSERT INTO $table (id, data, owner) 
+            VALUES (:id, jsonb(:data), -1)
+            ON CONFLICT(id) DO UPDATE SET 
+                data = jsonb(:data),
+                owner = -1
+            WHERE data IS NOT null
             """.trimIndent(), id, data.toString()
         )
         return id

@@ -78,23 +78,30 @@ class JsonDataQueries<T>(
         return id
     }
 
+    /**
+     * Update data for a given [id], or create a row if it doesn't already exist.
+     */
     context(tx: WriteTransaction)
     fun upsert(
         id: Uuid,
         data: JsonElement,
     ): Uuid {
-        tx.exec(
+        val updated = tx.select(
+            """
+            UPDATE $table 
+            SET data = jsonb(:data), owner = -1
+            WHERE id = :id AND data IS NOT null
+            """.trimIndent(), data.toString(), id
+        ).anyChanged()
+
+        if (!updated) tx.exec(
             """
             INSERT INTO $table (id, data, owner) 
             VALUES (:id, jsonb(:data), -1)
-            ON CONFLICT(id) DO UPDATE SET 
-                data = jsonb(:data),
-                owner = -1
-            WHERE data IS NOT null
-            """.trimIndent(), id, data.toString()
+            """.trimIndent()
         )
-        return id
 
+        return id
     }
 
     context(tx: WriteTransaction)

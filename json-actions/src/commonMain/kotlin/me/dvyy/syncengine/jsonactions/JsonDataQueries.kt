@@ -98,7 +98,8 @@ class JsonDataQueries<T>(
             """
             INSERT INTO $table (id, data, owner) 
             VALUES (:id, jsonb(:data), -1)
-            """.trimIndent()
+            """.trimIndent(),
+            id, data.toString()
         )
 
         return id
